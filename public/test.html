@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網站測試</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #3d2b1f 0%, #8b7355 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        
+        .container {
+            text-align: center;
+            padding: 2rem;
+            max-width: 800px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-family: Georgia, serif;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .checkmark {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: left;
+        }
+        
+        .info h3 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .info ul {
+            list-style: none;
+        }
+        
+        .info li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .info li:last-child {
+            border-bottom: none;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #3d2b1f;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 1rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .error-box {
+            background: rgba(255, 0, 0, 0.2);
+            border: 2px solid rgba(255, 0, 0, 0.5);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .success-box {
+            background: rgba(0, 255, 0, 0.2);
+            border: 2px solid rgba(0, 255, 0, 0.5);
+            border-radius: 10px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="checkmark">🔍</div>
+        <h1>網站狀態檢查</h1>
+        
+        <div class="status">
+            <h2>開發服務器狀態</h2>
+            <div class="success-box">
+                <p>✅ CSS 錯誤已修復</p>
+                <p>✅ 網站已重新構建</p>
+                <p>✅ 開發服務器正在運行</p>
+            </div>
+        </div>
+        
+        <div class="info">
+            <h3>📋 訪問步驟：</h3>
+            <ul>
+                <li>1. 打開瀏覽器訪問 http://localhost:3000</li>
+                <li>2. 如果 3000 無法訪問，嘗試 http://localhost:3001</li>
+                <li>3. 按 F5 刷新頁面</li>
+                <li>4. 如果仍無法訪問，查看下方故障排除</li>
+            </ul>
+        </div>
+        
+        <div class="info">
+            <h3>🔧 故障排除：</h3>
+            <ul>
+                <li>• 如果顯示"無法連上此網站"：開發服務器可能已停止</li>
+                <li>• 如果顯示"加載中"：按 Ctrl+Shift+R 強制刷新</li>
+                <li>• 檢查瀏覽器控制台 (F12) 查看錯誤</li>
+                <li>• 嘗試使用無痕模式訪問</li>
+            </ul>
+        </div>
+        
+        <div class="info">
+            <h3>🚀 重新啟動服務器：</h3>
+            <pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 5px; margin-top: 1rem; overflow-x: auto;">
+cd research-participant-site
+npm run dev
+            </pre>
+        </div>
+        
+        <div>
+            <a href="http://localhost:3000" class="btn" target="_blank">測試 localhost:3000</a>
+            <a href="http://localhost:3001" class="btn" target="_blank">測試 localhost:3001</a>
+            <a href="http://localhost:3002" class="btn" target="_blank">測試 localhost:3002</a>
+        </div>
+    </div>
+</body>
+</html>

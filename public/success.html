@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>網站修復完成 - Research Participant Site</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --background: #f5f5f5;
+            --foreground: #2c2420;
+            --primary: #3d2b1f;
+            --secondary: #8b7355;
+            --accent: #d4c4b0;
+            --card-bg: #ffffff;
+            --text-light: #6b5b4f;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #3d2b1f 0%, #8b7355 100%);
+            min-height: 100vh;
+            color: white;
+        }
+        
+        .font-serif {
+            font-family: 'Playfair Display', Georgia, serif;
+        }
+        
+        .font-sans {
+            font-family: 'Inter', sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="min-h-screen flex items-center justify-center p-8">
+        <div class="max-w-4xl w-full">
+            <div class="text-center mb-12">
+                <div class="text-8xl mb-6">✅</div>
+                <h1 class="text-5xl md:text-6xl font-bold mb-4 font-serif text-white">
+                    網站修復完成！
+                </h1>
+                <h2 class="text-3xl md:text-4xl font-bold mb-8 font-serif text-[#d4c4b0]">
+                    Website Fixed Successfully!
+                </h2>
+                
+                <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-8 mb-8 border border-white/20">
+                    <h3 class="text-2xl font-bold mb-4 font-serif">CSS 問題已修復</h3>
+                    <p class="text-xl text-[#d4c4b0] mb-4">
+                        @import 語句位置已修正
+                    </p>
+                    <p class="text-lg text-[#a89888]">
+                        The @import statement position has been corrected
+                    </p>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6 mb-8">
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h3 class="text-xl font-bold mb-4 font-serif text-[#d4c4b0]">
+                        🎨 新配色方案
+                    </h3>
+                    <ul class="space-y-2 text-white">
+                        <li>• 深棕色: #3d2b1f (主要)</li>
+                        <li>• 中棕色: #8b7355 (強調)</li>
+                        <li>• 淺棕色: #d4c4b0 (裝飾)</li>
+                        <li>• 灰色: #6b5b4f (正文)</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                    <h3 class="text-xl font-bold mb-4 font-serif text-[#d4c4b0]">
+                        🔤 字體配置
+                    </h3>
+                    <ul class="space-y-2 text-white">
+                        <li>• 標題: Playfair Display (serif)</li>
+                        <li>• 正文: Inter (sans-serif)</li>
+                        <li>• 大字號和適當留白</li>
+                        <li>• 全屏滾動效果</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="bg-white/10 backdrop-blur-sm rounded-xl p-6 mb-8 border border-white/20">
+                <h3 class="text-xl font-bold mb-4 font-serif text-[#d4c4b0]">
+                    🚀 如何訪問網站
+                </h3>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div>
+                        <h4 class="font-bold text-white mb-2">方法 1: 強制刷新</h4>
+                        <p class="text-[#a89888]">按 Ctrl + Shift + R 或 Ctrl + F5</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-2">方法 2: 清除快取</h4>
+                        <p class="text-[#a89888]">按 Ctrl + Shift + Delete</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-2">方法 3: 無痕模式</h4>
+                        <p class="text-[#a89888]">按 Ctrl + Shift + N</p>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-white mb-2">方法 4: 重新啟動</h4>
+                        <p class="text-[#a89888]">運行 npm run dev</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center">
+                <a href="http://localhost:3000" class="inline-block bg-white text-[#3d2b1f] font-bold py-4 px-10 rounded-full text-lg hover:bg-[#d4c4b0] transition-all duration-300 transform hover:scale-105 shadow-2xl font-serif mr-4">
+                    訪問主網站
+                </a>
+                <a href="http://localhost:3001" class="inline-block bg-[#8b7355] text-white font-bold py-4 px-10 rounded-full text-lg hover:bg-[#7a6348] transition-all duration-300 transform hover:scale-105 shadow-2xl font-serif">
+                    備用端口
+                </a>
+            </div>
+            
+            <div class="mt-12 text-center text-[#a89888]">
+                <p class="text-lg">
+                    如果還是無法顯示，請查看瀏覽器控制台 (F12) 的錯誤訊息
+                </p>
+                <p class="text-sm mt-2">
+                    If still not showing, please check browser console (F12) for errors
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

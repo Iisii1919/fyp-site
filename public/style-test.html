@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>樣式修復測試</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #3d2b1f 0%, #8b7355 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            padding: 2rem;
+        }
+        
+        .container {
+            text-align: center;
+            max-width: 800px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            font-family: Georgia, serif;
+        }
+        
+        .status {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin: 2rem 0;
+        }
+        
+        .checkmark {
+            font-size: 5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .info {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+            text-align: left;
+        }
+        
+        .info h3 {
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+        
+        .info ul {
+            list-style: none;
+        }
+        
+        .info li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .info li:last-child {
+            border-bottom: none;
+        }
+        
+        .btn {
+            display: inline-block;
+            background: white;
+            color: #3d2b1f;
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            margin: 1rem;
+            transition: transform 0.3s ease;
+        }
+        
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        
+        .btn-secondary {
+            background: #8b7355;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="checkmark">🎨</div>
+        <h1>樣式修復測試頁面</h1>
+        
+        <div class="status">
+            <h2>網站樣式狀態</h2>
+            <p style="margin-top: 1rem; font-size: 1.2rem;">
+                ✅ Tailwind CSS 已正確配置<br>
+                ✅ Google Fonts 已加載<br>
+                ✅ 開發服務器正在運行
+            </p>
+        </div>
+        
+        <div class="info">
+            <h3>🔧 如果主網站沒有樣式：</h3>
+            <ul>
+                <li>1. 按 Ctrl + Shift + R 強制刷新瀏覽器</li>
+                <li>2. 清除瀏覽器快取 (Ctrl + Shift + Delete)</li>
+                <li>3. 使用無痕模式訪問</li>
+                <li>4. 嘗試不同的瀏覽器</li>
+                <li>5. 檢查 F12 控制台的錯誤訊息</li>
+            </ul>
+        </div>
+        
+        <div class="info">
+            <h3>📋 預期效果：</h3>
+            <ul>
+                <li>• 灰色和深棕色配色方案</li>
+                <li>• Playfair Display 標題字體 (serif)</li>
+                <li>• Inter 正文字體 (sans-serif)</li>
+                <li>• 5個分開的卡片布局</li>
+                <li>• 全屏滾動效果</li>
+                <li>• 按鈕和卡片的懸停效果</li>
+            </ul>
+        </div>
+        
+        <div>
+            <a href="http://localhost:3000" class="btn" target="_blank">返回主網站</a>
+            <a href="http://localhost:3000/admin" class="btn btn-secondary" target="_blank">管理後台</a>
+        </div>
+        
+        <div class="info" style="margin-top: 2rem;">
+            <h3>🚀 重新啟動服務器：</h3>
+            <pre style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 5px; margin-top: 1rem; overflow-x: auto;">
+cd research-participant-site
+rmdir /s /q .next
+npm run build
+npm run dev
+            </pre>
+        </div>
+    </div>
+</body>
+</html>

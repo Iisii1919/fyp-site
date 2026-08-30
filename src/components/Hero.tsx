@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
-import { motion } from 'framer-motion';
+import { motion, type Variants } from 'framer-motion';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -11,23 +11,22 @@ interface HeroProps {
   onMouseMove?: (e: MouseEvent) => void;
 }
 
-const containerVariants = {
+const EASE: [number, number, number, number] = [0.25, 0.46, 0.45, 0.94];
+
+const containerVariants: Variants = {
   hidden: { opacity: 0 },
   visible: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.3,
-    },
+    transition: { staggerChildren: 0.15, delayChildren: 0.3 },
   },
 };
 
-const itemVariants = {
+const itemVariants: Variants = {
   hidden: { opacity: 0, y: 30 },
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] },
+    transition: { duration: 0.8, ease: EASE },
   },
 };
 
@@ -66,40 +65,26 @@ export default function Hero({ onMouseMove }: HeroProps) {
     <div
       ref={heroRef}
       className="relative h-screen w-full overflow-hidden flex items-center justify-center"
-      style={{ background: 'radial-gradient(ellipse at 50% 0%, #1a1620 0%, #0e0d10 50%, #08070a 100%)' }}
+      style={{ background: 'radial-gradient(ellipse at 50% 0%, #5e5e5e 0%, #545454 50%, #3d3d3d 100%)' }}
     >
       {/* 環境光暈 */}
+      <div className="ambient-glow" style={{ width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(198,168,248,0.16) 0%, transparent 70%)', top: '-10%', right: '-5%', transition: 'transform 0.3s ease-out' }} />
+      <div className="ambient-glow" style={{ width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(107,83,64,0.12) 0%, transparent 70%)', bottom: '-15%', left: '-10%', transition: 'transform 0.3s ease-out' }} />
+      <div className="ambient-glow" style={{ width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(169,138,107,0.09) 0%, transparent 70%)', top: '40%', left: '50%', transition: 'transform 0.3s ease-out' }} />
+
+      {/* 深棕色幾何裝飾（右側斜切多邊形） */}
       <div
-        className="ambient-glow"
+        className="absolute top-0 right-0 h-full w-[35%] opacity-60"
         style={{
-          width: '600px',
-          height: '600px',
-          background: 'radial-gradient(circle, rgba(201,169,110,0.15) 0%, transparent 70%)',
-          top: '-10%',
-          right: '-5%',
-          transition: 'transform 0.3s ease-out',
+          background: 'linear-gradient(135deg, #3c2d1e 0%, #2d1e0f 100%)',
+          clipPath: 'polygon(30% 0, 100% 0, 100% 100%, 0% 100%)',
         }}
       />
       <div
-        className="ambient-glow"
+        className="absolute top-0 right-0 h-full w-[20%] opacity-40"
         style={{
-          width: '500px',
-          height: '500px',
-          background: 'radial-gradient(circle, rgba(168,137,79,0.1) 0%, transparent 70%)',
-          bottom: '-15%',
-          left: '-10%',
-          transition: 'transform 0.3s ease-out',
-        }}
-      />
-      <div
-        className="ambient-glow"
-        style={{
-          width: '400px',
-          height: '400px',
-          background: 'radial-gradient(circle, rgba(224,201,148,0.08) 0%, transparent 70%)',
-          top: '40%',
-          left: '50%',
-          transition: 'transform 0.3s ease-out',
+          background: 'linear-gradient(135deg, #4d3d2e 0%, #3c2d1e 100%)',
+          clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 20% 100%)',
         }}
       />
 
@@ -107,7 +92,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
       <div
         className="absolute inset-0 opacity-[0.03]"
         style={{
-          backgroundImage: `linear-gradient(rgba(201,169,110,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(201,169,110,0.5) 1px, transparent 1px)`,
+          backgroundImage: `linear-gradient(rgba(198,168,248,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(198,168,248,0.5) 1px, transparent 1px)`,
           backgroundSize: '60px 60px',
         }}
       />
@@ -121,9 +106,9 @@ export default function Hero({ onMouseMove }: HeroProps) {
       >
         {/* 徽章 */}
         <motion.div variants={itemVariants} className="mb-10">
-          <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full border border-[rgba(201,169,110,0.25)] bg-[rgba(201,169,110,0.05)] backdrop-blur-sm">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#c9a96e] animate-pulse"></span>
-            <span className="text-xs tracking-[0.2em] uppercase text-[#c9a96e] font-medium">
+          <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full border border-[rgba(198,168,248,0.28)] bg-[rgba(198,168,248,0.06)] backdrop-blur-sm">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#d4bfff] animate-pulse"></span>
+            <span className="text-xs tracking-[0.2em] uppercase text-[#d4bfff] font-medium">
               Final Year Project · 畢業專題研究
             </span>
           </div>
@@ -132,56 +117,56 @@ export default function Hero({ onMouseMove }: HeroProps) {
         {/* 主標題 */}
         <motion.div variants={itemVariants} className="mb-6">
           <h1 className="font-serif font-bold leading-[1.05]">
-            <span className="block text-[#f5f0e8]">Study Experience</span>
-            <span className="block text-gold-gradient italic mt-2">Research Platform</span>
+            <span className="block text-[#FFFFFF]">Dark Film</span>
+            <span className="block text-accent-gradient italic mt-2">on Resilience</span>
           </h1>
         </motion.div>
 
         {/* 副標題 */}
         <motion.div variants={itemVariants} className="mb-10">
-          <h2 className="text-[#d4cdc0] font-serif font-medium tracking-wide">
-            研究體驗平台
+          <h2 className="text-[#EAECEF] font-serif font-medium tracking-wide">
+            黑暗電影與心理韌性研究
           </h2>
         </motion.div>
 
         {/* 分隔線 */}
         <motion.div variants={itemVariants} className="flex items-center justify-center gap-4 mb-10">
-          <div className="w-16 h-px bg-gradient-to-r from-transparent to-[#c9a96e]/50"></div>
-          <div className="w-1.5 h-1.5 rotate-45 bg-[#c9a96e]/60"></div>
-          <div className="w-16 h-px bg-gradient-to-l from-transparent to-[#c9a96e]/50"></div>
+          <div className="w-16 h-px bg-gradient-to-r from-transparent to-[#d4bfff]/50"></div>
+          <div className="w-1.5 h-1.5 rotate-45 bg-[#d4bfff]/60"></div>
+          <div className="w-16 h-px bg-gradient-to-l from-transparent to-[#d4bfff]/50"></div>
         </motion.div>
 
         {/* 描述 */}
         <motion.div variants={itemVariants} className="max-w-2xl mx-auto mb-14">
-          <p className="text-[#9a9288] text-lg leading-relaxed">
-            Welcome to our research study. We invite you to explore and participate in our experiment.
+          <p className="text-[#c4c4c4] text-lg leading-relaxed">
+            This study aims to explore the influence of dark film on psychological resilience.
           </p>
-          <p className="text-[#6b645c] text-base mt-3 leading-relaxed">
-            歡迎參加我們的研究實驗。我們誠摯邀請您探索並參與這項研究過程。
+          <p className="text-[#9a9a9a] text-base mt-3 leading-relaxed">
+            本研究旨在探討黑暗電影對心理韌性的影響。
           </p>
         </motion.div>
 
         {/* 三個特色卡片 */}
         <motion.div variants={itemVariants} className="grid md:grid-cols-3 gap-5 mb-14 max-w-4xl mx-auto">
           {[
-            { icon: '🎬', en: 'Watch Videos', zh: '觀看精心準備的影片片段' },
-            { icon: '📝', en: 'Complete Tasks', zh: '完成問卷與數據收集任務' },
-            { icon: '🔬', en: 'Research Study', zh: '助力學術研究進展' },
+            { en: 'Watch Videos', zh: '觀看精心準備的影片片段' },
+            { en: 'Complete Tasks', zh: '完成問卷與數據收集任務' },
+            { en: 'Research Study', zh: '助力學術研究進展' },
           ].map((item, i) => (
             <motion.div
               key={i}
               whileHover={{ y: -4, transition: { duration: 0.3 } }}
-              className="glass-card p-6 text-left group cursor-default"
+              className="glass-card p-6 text-center group cursor-default"
             >
-              <div className="text-3xl mb-4 opacity-80 group-hover:opacity-100 transition-opacity">{item.icon}</div>
-              <h3 className="text-[#e0c994] font-serif text-lg mb-2">{item.en}</h3>
-              <p className="text-[#6b645c] text-sm leading-relaxed">{item.zh}</p>
+              <div className="w-8 h-px bg-gradient-to-r from-transparent via-[#d4bfff]/50 to-transparent mx-auto mb-4"></div>
+              <h3 className="text-[#EAECEF] font-serif text-lg mb-2">{item.en}</h3>
+              <p className="text-[#9a9a9a] text-sm leading-relaxed">{item.zh}</p>
             </motion.div>
           ))}
         </motion.div>
 
         {/* 開始按鈕 */}
-        <motion.div variants={itemVariants}>
+        <motion.div variants={itemVariants} className="mt-10">
           <motion.button
             whileHover={{ scale: 1.03 }}
             whileTap={{ scale: 0.97 }}
@@ -204,14 +189,14 @@ export default function Hero({ onMouseMove }: HeroProps) {
         transition={{ delay: 2, duration: 1 }}
         className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
       >
-        <div className="w-6 h-10 rounded-full border border-[rgba(201,169,110,0.3)] flex justify-center pt-2">
+        <div className="w-6 h-10 rounded-full border border-[rgba(198,168,248,0.32)] flex justify-center pt-2">
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-1 h-2 rounded-full bg-[#c9a96e]"
+            className="w-1 h-2 rounded-full bg-[#d4bfff]"
           />
         </div>
-        <span className="text-[10px] tracking-[0.25em] uppercase text-[#6b645c]">Scroll</span>
+        <span className="text-[10px] tracking-[0.25em] uppercase text-[#9a9a9a]">Scroll</span>
       </motion.div>
     </div>
   );

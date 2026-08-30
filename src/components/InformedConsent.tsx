@@ -9,40 +9,54 @@ interface InformedConsentProps {
 
 const sections = [
   {
-    title: 'Research Purpose',
-    titleZh: '研究目的',
-    icon: '🎯',
-    content: 'This study aims to investigate the effects of multimedia content on user engagement and cognitive processing. Your participation will help us understand how people interact with digital media in research settings.',
-    contentZh: '本研究旨在調查多媒體內容對用戶參與度和認知處理的影響。您的參與將幫助我們了解人們在研究環境中如何與數字媒體互動。',
+    title: '1. Purpose of the Project',
+    content: 'This study aims to examine how viewing different types of film excerpts affects viewers\u2019 immediate emotional responses, thought processes, and psychological resilience. You will be asked to watch a series of short film excerpts and complete questionnaires about your feelings and thoughts afterwards.',
   },
   {
-    title: 'What You Will Do',
-    titleZh: '您將要做什麼',
-    icon: '📋',
+    title: '2. Research Procedures',
     items: [
-      'Watch 5 video clips（觀看 5 個影片片段）',
-      'Complete demographic information（填寫基本資料）',
-      'Answer questionnaires（回答問卷）',
-      'Estimated time: 20-30 minutes（預計時間：20-30 分鐘）',
+      'Complete a pre-viewing questionnaire (approximately 5 minutes).',
+      'Watch five short film excerpts, approximately 10 minutes in total.',
+      'Complete a post-viewing questionnaire (approximately 8 minutes).',
+      'The total duration of the study is approximately 20\u201325 minutes.',
     ],
   },
   {
-    title: 'Your Rights',
-    titleZh: '您的權利',
-    icon: '🛡️',
-    items: [
-      'Participation is completely voluntary（參與完全自願）',
-      'You can withdraw at any time without penalty（您可以隨時退出，無需承擔後果）',
-      'All data will be kept confidential and anonymous（所有數據將保密且匿名）',
-      'You have the right to ask questions at any time（您有權隨時提出問題）',
-    ],
+    title: '3. Potential Risks and Discomforts',
+    content: 'Some of the film excerpts may contain themes of sadness, suffering, or moral distress, which may cause temporary feelings of sadness or discomfort. If you feel uneasy at any point, you may pause or withdraw from the study without giving any reason.',
+    extra: (
+      <div className="mt-3 p-3 rounded-lg bg-[rgba(198,168,248,0.07)] border border-[rgba(198,168,248,0.12)]">
+        <p className="text-[#d4bfff] text-xs font-semibold mb-2">If you experience persistent distress after participation, you are encouraged to contact:</p>
+        <ul className="space-y-1">
+          <li className="text-[#c4c4c4] text-xs">The Samaritans Hong Kong: <span className="text-[#d4bfff]">2896 0000</span> (24-hour hotline)</li>
+          <li className="text-[#c4c4c4] text-xs">The Mental Health Association of Hong Kong: <span className="text-[#d4bfff]">2528 0196</span></li>
+        </ul>
+      </div>
+    ),
   },
   {
-    title: 'Contact Information',
-    titleZh: '聯絡方式',
-    icon: '✉️',
-    content: 'If you have any questions or concerns, please contact the research team:',
-    email: 'research@example.edu',
+    title: '4. Confidentiality and Data Protection',
+    content: 'All information collected will be kept strictly confidential and used solely for academic research purposes. Data will be anonymised, and no personally identifiable information will be reported. In accordance with the Personal Data (Privacy) Ordinance (Cap. 486), you have the right to request access to and correction of your personal data. Data will be stored securely and destroyed after the completion of the research project.',
+  },
+  {
+    title: '5. Voluntary Participation and Right to Withdraw',
+    content: 'Your participation is entirely voluntary. You have the right to withdraw from the study at any time without penalty or negative consequences. If you withdraw, you may request that your data be excluded from the analysis.',
+  },
+  {
+    title: '6. Contact Information',
+    content: 'If you have any questions about this study, please contact:',
+    extra: (
+      <div className="mt-3 space-y-1">
+        <p className="text-[#c4c4c4] text-sm"><span className="text-[#EAECEF] font-medium">Student:</span> LIN Jiaquan</p>
+        <p className="text-[#c4c4c4] text-sm"><span className="text-[#EAECEF] font-medium">Email:</span> <a href="mailto:s1160702@s.eduhk.hk" className="text-[#d4bfff] hover:underline">s1160702@s.eduhk.hk</a></p>
+        <p className="text-[#c4c4c4] text-sm mt-2"><span className="text-[#EAECEF] font-medium">Supervisor:</span> Dr. Lawrence Chan</p>
+        <p className="text-[#c4c4c4] text-sm"><span className="text-[#EAECEF] font-medium">Department:</span> Department of Psychology</p>
+      </div>
+    ),
+  },
+  {
+    title: '7. Consent Statement',
+    content: 'I have read and understood the above information. I understand the purpose, procedures, potential risks, and my rights as a participant. I voluntarily agree to participate in this study. By clicking \u201CI agree\u201D and proceeding to the study, I indicate my informed consent to participate.',
   },
 ];
 
@@ -52,24 +66,20 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
   const handleSubmit = () => {
     if (isChecked) {
       onAccepted();
-      setTimeout(() => {
-        const participantSection = document.querySelector('[data-section="2"]');
-        participantSection?.scrollIntoView({ behavior: 'smooth' });
-      }, 300);
     }
   };
 
   return (
     <div
       className="h-screen w-full flex items-center justify-center p-4 md:p-8 overflow-auto relative"
-      style={{ background: 'radial-gradient(ellipse at 30% 50%, #131116 0%, #0a090c 60%, #08070a 100%)' }}
+      style={{ background: 'radial-gradient(ellipse at 30% 50%, #545454 0%, #3d3d3d 60%, #3d3d3d 100%)' }}
     >
       {/* 環境光 */}
       <div
         className="ambient-glow"
         style={{
           width: '500px', height: '500px',
-          background: 'radial-gradient(circle, rgba(201,169,110,0.08) 0%, transparent 70%)',
+          background: 'radial-gradient(circle, rgba(198,168,248,0.1) 0%, transparent 70%)',
           top: '10%', right: '5%',
         }}
       />
@@ -81,65 +91,58 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
         className="max-w-4xl w-full relative z-10"
       >
         {/* 標題區 */}
-        <div className="text-center mb-10">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.2, duration: 0.5 }}
-            className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[rgba(201,169,110,0.1)] border border-[rgba(201,169,110,0.2)] mb-6"
-          >
-            <span className="text-2xl">📜</span>
-          </motion.div>
-          <h1 className="font-serif font-bold text-[#f5f0e8] mb-2">
-            Informed Consent
+        <div className="text-center mb-8">
+          <h1 className="font-serif font-bold text-[#FFFFFF] text-2xl md:text-3xl mb-1">
+            Informed Consent Form
           </h1>
-          <h2 className="font-serif text-gold-gradient text-2xl md:text-3xl font-medium mb-6">
+          <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-5">
             知情同意書
           </h2>
-          <div className="gold-divider max-w-xs mx-auto"></div>
+          <div className="gold-divider max-w-xs mx-auto mb-5"></div>
+
+          {/* 研究資訊 */}
+          <div className="text-sm space-y-1">
+            <p className="text-[#EAECEF] font-serif font-semibold">The Influence of Dark Film on Enhancing Psychological Resilience</p>
+            <p className="text-[#C6A8F8] text-xs">
+              LIN Jiaquan &middot; Department of Psychology &middot; Supervisor: Dr. Lawrence Chan
+            </p>
+            <p className="text-[#9a9a9a] text-xs">
+              <a href="mailto:s1160702@s.eduhk.hk" className="hover:text-[#d4bfff] transition-colors">s1160702@s.eduhk.hk</a>
+            </p>
+          </div>
         </div>
 
         {/* 內容卡片 */}
-        <div className="glass-card p-6 md:p-10 mb-8 max-h-[50vh] overflow-y-auto pr-2">
-          <div className="space-y-8">
+        <div className="glass-card p-6 md:p-8 mb-6 max-h-[42vh] overflow-y-auto pr-2">
+          <div className="space-y-6">
             {sections.map((section, i) => (
               <motion.div
                 key={i}
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.3 + i * 0.1, duration: 0.5 }}
-                className="border-l-2 border-[rgba(201,169,110,0.2)] pl-5 py-1"
+                transition={{ delay: 0.3 + i * 0.08, duration: 0.5 }}
+                className="border-l-2 border-[rgba(198,168,248,0.24)] pl-5 py-1"
               >
-                <div className="flex items-center gap-3 mb-3">
-                  <span className="text-xl opacity-70">{section.icon}</span>
-                  <div>
-                    <h3 className="font-serif text-[#e0c994] text-lg font-semibold">{section.title}</h3>
-                    <p className="text-[#8a7650] text-xs">{section.titleZh}</p>
-                  </div>
+                <div className="mb-2">
+                  <h3 className="font-serif text-[#EAECEF] text-base font-semibold">{section.title}</h3>
                 </div>
 
                 {section.content && (
-                  <div className="space-y-2">
-                    <p className="text-[#9a9288] text-sm leading-relaxed">{section.content}</p>
-                    {section.contentZh && (
-                      <p className="text-[#6b645c] text-sm leading-relaxed">{section.contentZh}</p>
-                    )}
-                    {section.email && (
-                      <p className="text-[#c9a96e] text-sm font-medium mt-2">{section.email}</p>
-                    )}
-                  </div>
+                  <p className="text-[#c4c4c4] text-sm leading-relaxed">{section.content}</p>
                 )}
 
                 {section.items && (
-                  <ul className="space-y-2 mt-1">
+                  <ul className="space-y-1.5 mt-1">
                     {section.items.map((item, j) => (
-                      <li key={j} className="flex items-start gap-3 text-[#9a9288] text-sm">
-                        <span className="text-[#c9a96e] mt-1.5 w-1 h-1 rounded-full bg-[#c9a96e] flex-shrink-0"></span>
+                      <li key={j} className="flex items-start gap-3 text-[#c4c4c4] text-sm">
+                        <span className="text-[#d4bfff] mt-1.5 w-1 h-1 rounded-full bg-[#d4bfff] flex-shrink-0"></span>
                         <span className="leading-relaxed">{item}</span>
                       </li>
                     ))}
                   </ul>
                 )}
+
+                {section.extra}
               </motion.div>
             ))}
           </div>
@@ -150,7 +153,7 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.5 }}
-          className="glass-card p-5 md:p-6 mb-8"
+          className="glass-card p-4 md:p-5 mb-6"
         >
           <label className="flex items-start gap-4 cursor-pointer group">
             <div className="relative flex-shrink-0 mt-0.5">
@@ -162,20 +165,20 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
               />
               <div className={`w-6 h-6 rounded-md border-2 transition-all duration-300 flex items-center justify-center ${
                 isChecked
-                  ? 'bg-[#c9a96e] border-[#c9a96e]'
-                  : 'border-[rgba(201,169,110,0.3)] group-hover:border-[#c9a96e]'
+                  ? 'bg-[#d4bfff] border-[#d4bfff]'
+                  : 'border-[rgba(198,168,248,0.34)] group-hover:border-[#d4bfff]'
               }`}>
                 {isChecked && (
-                  <svg className="w-4 h-4 text-[#08070a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-[#3d3d3d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                   </svg>
                 )}
               </div>
             </div>
-            <span className="text-[#9a9288] text-sm leading-relaxed">
+            <span className="text-[#c4c4c4] text-sm leading-relaxed">
               I have read and understood the above information. I voluntarily agree to participate in this research study.
               <br />
-              <span className="text-[#6b645c]">我已閱讀並理解上述資訊。我自願同意參與這項研究。</span>
+              <span className="text-[#9a9a9a]">我已閱讀並理解上述資訊。我自願同意參與這項研究。</span>
             </span>
           </label>
         </motion.div>

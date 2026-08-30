@@ -1,27 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Hero from '@/components/Hero';
 import InformedConsent from '@/components/InformedConsent';
-import ParticipantInfo from '@/components/ParticipantInfo';
+import PreTest from '@/components/PreTest';
 import VideoViewer from '@/components/VideoViewer';
-import Questionnaire from '@/components/Questionnaire';
+import PostTest1 from '@/components/PostTest1';
+import PostTest2 from '@/components/PostTest2';
 import ThankYou from '@/components/ThankYou';
 
 export default function Home() {
   const [currentSection, setCurrentSection] = useState(0);
-  const [participantData, setParticipantData] = useState({
-    name: '',
-    email: '',
-    age: '',
-    gender: '',
-  });
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [videoProgress, setVideoProgress] = useState(0);
-  const [questionnaireData, setQuestionnaireData] = useState({
-    q1: '', q2: '', q3: '', q4: '', q5: '',
-    q6: '', q7: '', q8: '', q9: '', q10: '',
-  });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -38,54 +29,187 @@ export default function Home() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  // 自訂垂直吸附：比原生慢、有變速 easing，且問卷區（no-snap、距離遠）不吸附
+  useEffect(() => {
+    const SNAP_DURATION = 800; // ms，越慢越從容
+    let animating = false;
+
+    const getTargets = (): number[] => {
+      const els = document.querySelectorAll('section:not(.no-snap), .scroll-snap-start');
+      const tops: number[] = [];
+      els.forEach((el) => {
+        const top = Math.round((el as HTMLElement).getBoundingClientRect().top + window.scrollY);
+        if (!Number.isNaN(top)) tops.push(top);
+      });
+      return tops.sort((a, b) => a - b);
+    };
+
+    const tweenTo = (targetY: number) => {
+      const startY = window.scrollY;
+      const dist = targetY - startY;
+      if (Math.abs(dist) < 2) return;
+      animating = true;
+      const start = performance.now();
+      const step = (now: number) => {
+        const t = Math.min(1, (now - start) / SNAP_DURATION);
+        // easeInOutCubic —— 開頭慢、中段快、尾段再慢（變速感）
+        const e = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        window.scrollTo(0, Math.round(startY + dist * e));
+        if (t < 1) requestAnimationFrame(step);
+        else animating = false;
+      };
+      requestAnimationFrame(step);
+    };
+
+    // 找下一個吸附點；距離超過門檻（通常是問卷區）就回傳 undefined（自由滾動）
+    const findTarget = (dir: number): number | undefined => {
+      const tops = getTargets();
+      const cur = window.scrollY;
+      const threshold = window.innerHeight * 1.6;
+      if (dir > 0) {
+        for (const y of tops) {
+          if (y > cur + 4) return y - cur <= threshold ? y : undefined;
+        }
+        return undefined;
+      }
+      for (let i = tops.length - 1; i >= 0; i--) {
+        if (tops[i] < cur - 4) return cur - tops[i] <= threshold ? tops[i] : undefined;
+      }
+      return undefined;
+    };
+
+    const onWheel = (e: WheelEvent) => {
+      if (document.fullscreenElement || animating) {
+        if (animating) e.preventDefault();
+        return;
+      }
+      if (Math.abs(e.deltaY) < 4) return;
+      const target = findTarget(e.deltaY > 0 ? 1 : -1);
+      if (target === undefined) return; // 問卷區等：不吸附，交給原生滾動
+      e.preventDefault();
+      tweenTo(target);
+    };
+
+    // 觸控：輕掃結束後吸附到最近分頁
+    let touchStartY = 0;
+    let touchMoved = false;
+    const onTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+      touchMoved = false;
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (Math.abs(e.touches[0].clientY - touchStartY) > 12) touchMoved = true;
+    };
+    const onTouchEnd = (e: TouchEvent) => {
+      if (document.fullscreenElement || animating) return;
+      const dy = touchStartY - e.changedTouches[0].clientY;
+      if (!touchMoved || Math.abs(dy) < 30) return;
+      const target = findTarget(dy > 0 ? 1 : -1);
+      if (target !== undefined) tweenTo(target);
+    };
+
+    window.addEventListener('wheel', onWheel, { passive: false });
+    window.addEventListener('touchstart', onTouchStart, { passive: true });
+    window.addEventListener('touchmove', onTouchMove, { passive: true });
+    window.addEventListener('touchend', onTouchEnd, { passive: true });
+
+    return () => {
+      window.removeEventListener('wheel', onWheel);
+      window.removeEventListener('touchstart', onTouchStart);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
+    };
+  }, []);
+
+  // 可靠的跳轉函數：臨時關閉滾動吸附，滾動後恢復
+  const scrollToSection = useCallback((index: number) => {
+    const element = document.querySelector(`[data-section="${index}"]`);
+    if (!element) return;
+
+    // 臨時關閉滾動吸附，避免干擾程序化滾動
+    const html = document.documentElement;
+    const originalSnapType = html.style.scrollSnapType;
+    html.style.scrollSnapType = 'none';
+
+    // 計算目標位置
+    const targetTop = element.getBoundingClientRect().top + window.pageYOffset;
+
+    // 使用 instant 滾動（不依賴 smooth，避免被吸附打斷）
+    window.scrollTo({ top: targetTop, behavior: 'auto' });
+
+    // 短暫等待後恢復滾動吸附
+    setTimeout(() => {
+      html.style.scrollSnapType = originalSnapType || '';
+    }, 100);
+  }, []);
+
   const handleConsentAccepted = () => {
     setConsentAccepted(true);
+    setTimeout(() => scrollToSection(2), 200);
   };
 
-  const handleParticipantSubmit = (data: typeof participantData) => {
-    setParticipantData(data);
+  const handlePreTestComplete = () => {
+    setTimeout(() => scrollToSection(3), 200);
   };
 
-  const handleVideoProgress = (progress: number) => {
+  const handleVideoProgress = useCallback((progress: number) => {
     setVideoProgress(progress);
+  }, []);
+
+  const handleAllVideosComplete = useCallback(() => {
+    setTimeout(() => scrollToSection(4), 200);
+  }, []);
+
+  const handlePostTest1Complete = () => {
+    setTimeout(() => scrollToSection(5), 200);
   };
 
-  const handleQuestionnaireSubmit = (data: {[key: string]: string}) => {
-    setQuestionnaireData(data as typeof questionnaireData);
+  const handlePostTest2Complete = () => {
+    setTimeout(() => scrollToSection(6), 200);
   };
 
   return (
-    <main className="bg-[#08070a]">
+    <main className="bg-[#3d3d3d]">
+      {/* 0: 首頁 Hero */}
       <section data-section="0" className="h-screen w-full overflow-hidden">
         <Hero />
       </section>
 
+      {/* 1: 知情同意書 Informed Consent */}
       <section data-section="1" className="h-screen w-full overflow-hidden">
         <InformedConsent onAccepted={handleConsentAccepted} />
       </section>
 
-      <section data-section="2" className="h-screen w-full overflow-hidden">
-        <ParticipantInfo 
-          onSubmit={handleParticipantSubmit}
-          consentAccepted={consentAccepted}
-        />
+      {/* 2: 前測 Pre-Test */}
+      <div className="snap-point"></div>
+      <section data-section="2" className="w-full no-snap">
+        <PreTest onComplete={handlePreTestComplete} />
       </section>
 
-      <section data-section="3" className="w-full">
-        <VideoViewer 
+      {/* 3: 影片區 Video Viewer（外層不吸附，內部各視頻/過渡頁獨立吸附） */}
+      <section data-section="3" className="w-full no-snap">
+        <VideoViewer
           onProgress={handleVideoProgress}
           progress={videoProgress}
+          onAllComplete={handleAllVideosComplete}
         />
       </section>
 
-      {/* 問卷吸附點 */}
+      {/* 4: 後測一 Post-Test 1 */}
       <div className="snap-point"></div>
       <section data-section="4" className="w-full no-snap">
-        <Questionnaire onSubmit={handleQuestionnaireSubmit} participantData={participantData} />
+        <PostTest1 onComplete={handlePostTest1Complete} />
       </section>
 
-      <section data-section="5" className="h-screen w-full overflow-hidden">
-        <ThankYou participantName={participantData.name} />
+      {/* 5: 後測二 Post-Test 2 */}
+      <div className="snap-point"></div>
+      <section data-section="5" className="w-full no-snap">
+        <PostTest2 onComplete={handlePostTest2Complete} />
+      </section>
+
+      {/* 6: 感謝頁 Thank You */}
+      <section data-section="6" className="h-screen w-full overflow-hidden">
+        <ThankYou participantName="" />
       </section>
     </main>
   );

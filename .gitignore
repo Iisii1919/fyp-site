@@ -42,3 +42,28 @@ next-env.d.ts
 
 # runtime data (questionnaire submissions)
 /data/
+
+# --- Stray working/screenshot files: keep locally, do NOT deploy to GitHub/Netlify ---
+ref-*.png
+reference-style.png
+screenshot-*.png
+ss-*.png
+restore-baseline.ps1
+setup-git.ps1
+dev-server*.log
+scripts/
+AGENTS.md
+CHANGES.md
+CLAUDE.md
+CSS_FIX_GUIDE.md
+DATA_COLLECTION_GUIDE.md
+DATA_COLLECTION_PLAN.md
+DESIGN_UPDATE.md
+FINAL_REPORT.md
+FIX_GUIDE.md
+PROJECT_REPORT.md
+SOLUTION.md
+STYLE_FIX_GUIDE.md
+TESTING_GUIDE.md
+TROUBLESHOOTING.md
+

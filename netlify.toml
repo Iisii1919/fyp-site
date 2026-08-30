@@ -1,0 +1,11 @@
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  # 影片託管在 Cloudflare R2（免費頻寬），Netlify 不再承擔影片流量
+  NEXT_PUBLIC_VIDEO_BASE_URL = "https://pub-6560cd0b7f214bf8a5e6476cfdb4afa9.r2.dev"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

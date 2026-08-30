@@ -20,7 +20,7 @@ export default function ThankYou({ participantName }: ThankYouProps) {
     canvas.height = window.innerHeight;
 
     const particles: { x: number; y: number; vx: number; vy: number; size: number; alpha: number; color: string }[] = [];
-    const colors = ['#c9a96e', '#e0c994', '#a8894f', '#d4b87a', '#8a7650'];
+    const colors = ['#d4bfff', '#EAECEF', '#9b7fd4', '#b99a7d', '#C6A8F8'];
 
     for (let i = 0; i < 60; i++) {
       particles.push({
@@ -62,12 +62,21 @@ export default function ThankYou({ participantName }: ThankYouProps) {
   return (
     <div
       className="h-screen w-full flex items-center justify-center relative overflow-hidden"
-      style={{ background: 'radial-gradient(ellipse at 50% 30%, #1a1620 0%, #0e0d10 50%, #060508 100%)' }}
+      style={{ background: 'radial-gradient(ellipse at 50% 30%, #5a5a5a 0%, #4a4a4a 50%, #3d3d3d 100%)' }}
     >
       <canvas ref={canvasRef} className="absolute inset-0" style={{ opacity: 0.6 }} />
 
       {/* 環境光 */}
-      <div className="ambient-glow" style={{ width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(201,169,110,0.12) 0%, transparent 70%)', top: '10%', left: '50%', transform: 'translateX(-50%)' }} />
+      <div className="ambient-glow" style={{ width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(198,168,248,0.14) 0%, transparent 70%)', top: '10%', left: '50%', transform: 'translateX(-50%)' }} />
+
+      {/* 棕色裝飾（右下角斜切） */}
+      <div
+        className="absolute bottom-0 right-0 h-full w-[25%] opacity-30 pointer-events-none"
+        style={{
+          background: 'linear-gradient(135deg, #3c2d1e 0%, #2d1e0f 100%)',
+          clipPath: 'polygon(0 0, 100% 0, 100% 100%, 30% 100%)',
+        }}
+      />
 
       <motion.div
         initial={{ opacity: 0, scale: 0.92, y: 30 }}
@@ -81,9 +90,9 @@ export default function ThankYou({ participantName }: ThankYouProps) {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.3, type: 'spring', stiffness: 200, damping: 15 }}
           className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-8"
-          style={{ background: 'linear-gradient(135deg, #c9a96e, #a8894f)', boxShadow: '0 0 60px rgba(201,169,110,0.3)' }}
+          style={{ background: 'linear-gradient(135deg, #d4bfff, #9b7fd4)', boxShadow: '0 0 60px rgba(198,168,248,0.34)' }}
         >
-          <svg className="w-10 h-10 text-[#08070a]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-10 h-10 text-[#3d3d3d]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
           </svg>
         </motion.div>
@@ -95,7 +104,7 @@ export default function ThankYou({ participantName }: ThankYouProps) {
           transition={{ delay: 0.5, duration: 0.8 }}
           className="font-serif font-bold mb-3"
         >
-          <span className="block text-[#f5f0e8] text-4xl md:text-5xl">Thank You</span>
+          <span className="block text-[#FFFFFF] text-4xl md:text-5xl">Thank You</span>
           <span className="block text-gold-gradient italic text-3xl md:text-4xl mt-2">感謝您的參與</span>
         </motion.h1>
 
@@ -113,17 +122,17 @@ export default function ThankYou({ participantName }: ThankYouProps) {
           transition={{ delay: 0.8, duration: 0.8 }}
           className="glass-card p-8 md:p-10 max-w-xl mx-auto mb-8"
         >
-          <p className="text-[#d4cdc0] text-lg leading-relaxed font-serif mb-3">
+          <p className="text-[#EAECEF] text-lg leading-relaxed font-serif mb-3">
             Thank you for participating in our research study{participantName ? `, ${participantName}` : ''}.
           </p>
-          <p className="text-[#8a7650] text-sm leading-relaxed">
+          <p className="text-[#C6A8F8] text-sm leading-relaxed">
             感謝您參與我們的研究{participantName ? `，${participantName}` : ''}。
           </p>
-          <div className="border-t border-[rgba(201,169,110,0.1)] pt-6 mt-6">
-            <p className="text-[#6b645c] text-sm leading-relaxed">
+          <div className="border-t border-[rgba(198,168,248,0.12)] pt-6 mt-6">
+            <p className="text-[#9a9a9a] text-sm leading-relaxed">
               Your contribution helps advance scientific knowledge and understanding.
             </p>
-            <p className="text-[#5a544c] text-xs mt-2">
+            <p className="text-[#8a8a8a] text-xs mt-2">
               您的貢獻有助於推進科學知識和理解。
             </p>
           </div>
@@ -142,8 +151,8 @@ export default function ThankYou({ participantName }: ThankYouProps) {
             { label: 'Contact', value: 'research@example.edu', zh: '聯絡' },
           ].map((item, i) => (
             <div key={i} className="text-center">
-              <p className="text-[#5a544c] uppercase tracking-wider text-[10px]">{item.label} · {item.zh}</p>
-              <p className="text-[#c9a96e] text-sm font-medium mt-1">{item.value}</p>
+              <p className="text-[#8a8a8a] uppercase tracking-wider text-[10px]">{item.label} · {item.zh}</p>
+              <p className="text-[#d4bfff] text-sm font-medium mt-1">{item.value}</p>
             </div>
           ))}
         </motion.div>

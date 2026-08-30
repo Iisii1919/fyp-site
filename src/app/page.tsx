@@ -122,7 +122,8 @@ export default function Home() {
   }, []);
 
   // 可靠的跳轉函數：臨時關閉滾動吸附，滾動後恢復
-  const scrollToSection = useCallback((index: number) => {
+  // behavior 預設 'auto'（瞬時，用於問卷遞進）；'smooth' 用於同意書 → 前測的平滑滾動
+  const scrollToSection = useCallback((index: number, behavior: ScrollBehavior = 'auto') => {
     const element = document.querySelector(`[data-section="${index}"]`);
     if (!element) return;
 
@@ -134,18 +135,19 @@ export default function Home() {
     // 計算目標位置
     const targetTop = element.getBoundingClientRect().top + window.pageYOffset;
 
-    // 使用 instant 滾動（不依賴 smooth，避免被吸附打斷）
-    window.scrollTo({ top: targetTop, behavior: 'auto' });
+    // smooth 平滑滾動；auto 瞬時跳轉
+    window.scrollTo({ top: targetTop, behavior });
 
-    // 短暫等待後恢復滾動吸附
+    // 平滑滾動需要較長時間，等滾動結束再恢復吸附，避免被打斷
+    const restoreDelay = behavior === 'smooth' ? 1100 : 100;
     setTimeout(() => {
       html.style.scrollSnapType = originalSnapType || '';
-    }, 100);
+    }, restoreDelay);
   }, []);
 
   const handleConsentAccepted = () => {
     setConsentAccepted(true);
-    setTimeout(() => scrollToSection(2), 200);
+    setTimeout(() => scrollToSection(2, 'smooth'), 200);
   };
 
   const handlePreTestComplete = () => {

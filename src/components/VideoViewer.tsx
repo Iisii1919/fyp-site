@@ -606,7 +606,7 @@ export default function VideoViewer({ onProgress, progress, onAllComplete }: Vid
       </div>
 
       {/* Enjoy the Journey 歡迎頁 */}
-      <div className="h-screen w-full relative overflow-hidden scroll-snap-start" style={{ background: 'radial-gradient(ellipse at center, #545454 0%, #3d3d3d 70%)' }}>
+      <div className="h-screen w-full relative overflow-hidden no-snap" style={{ background: 'radial-gradient(ellipse at center, #545454 0%, #3d3d3d 70%)' }}>
         <div className="ambient-glow" style={{ width: '600px', height: '600px', background: 'radial-gradient(circle, rgba(198,168,248,0.12) 0%, transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
         <motion.div
           initial={{ opacity: 0, y: 30 }}

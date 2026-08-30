@@ -157,6 +157,18 @@ export default function ThankYou({ participantName }: ThankYouProps) {
           ))}
         </motion.div>
 
+        {/* 可關閉頁面提示（中英文） */}
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 1.1, duration: 0.8 }}
+          className="text-center text-[#b0a89e] text-sm leading-relaxed mt-2 mb-8"
+        >
+          You can now close this page.
+          <br />
+          你現在可以關閉頁面。
+        </motion.p>
+
         {/* 返回按鈕 */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

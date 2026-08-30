@@ -51,6 +51,7 @@ ss-*.png
 restore-baseline.ps1
 setup-git.ps1
 dev-server*.log
+dev.log
 scripts/
 AGENTS.md
 CHANGES.md

@@ -7,6 +7,7 @@ import PreTest from '@/components/PreTest';
 import VideoViewer from '@/components/VideoViewer';
 import PostTest1 from '@/components/PostTest1';
 import PostTest2 from '@/components/PostTest2';
+import PostViewFeedback from '@/components/PostViewFeedback';
 import ThankYou from '@/components/ThankYou';
 
 export default function Home() {
@@ -162,12 +163,16 @@ export default function Home() {
     setTimeout(() => scrollToSection(4), 200);
   }, []);
 
-  const handlePostTest1Complete = () => {
+  const handleFeedbackComplete = () => {
     setTimeout(() => scrollToSection(5), 200);
   };
 
-  const handlePostTest2Complete = () => {
+  const handlePostTest1Complete = () => {
     setTimeout(() => scrollToSection(6), 200);
+  };
+
+  const handlePostTest2Complete = () => {
+    setTimeout(() => scrollToSection(7), 200);
   };
 
   return (
@@ -197,20 +202,26 @@ export default function Home() {
         />
       </section>
 
-      {/* 4: 後測一 Post-Test 1 */}
+      {/* 4: 觀後回饋 Post-Viewing Feedback */}
       <div className="snap-point"></div>
       <section data-section="4" className="w-full no-snap">
+        <PostViewFeedback onComplete={handleFeedbackComplete} />
+      </section>
+
+      {/* 5: 後測一 Post-Test 1 */}
+      <div className="snap-point"></div>
+      <section data-section="5" className="w-full no-snap">
         <PostTest1 onComplete={handlePostTest1Complete} />
       </section>
 
-      {/* 5: 後測二 Post-Test 2 */}
+      {/* 6: 後測二 Post-Test 2 */}
       <div className="snap-point"></div>
-      <section data-section="5" className="w-full no-snap">
+      <section data-section="6" className="w-full no-snap">
         <PostTest2 onComplete={handlePostTest2Complete} />
       </section>
 
-      {/* 6: 感謝頁 Thank You */}
-      <section data-section="6" className="h-screen w-full overflow-hidden">
+      {/* 7: 感謝頁 Thank You */}
+      <section data-section="7" className="h-screen w-full overflow-hidden">
         <ThankYou participantName="" />
       </section>
     </main>

@@ -675,8 +675,8 @@ export default function VideoViewer({ onProgress, progress, onAllComplete }: Vid
             </div>
             <h2 className="font-serif text-[#EAECEF] text-3xl md:text-4xl font-bold mb-3">All Videos Completed</h2>
             <p className="text-[#C6A8F8] text-lg mb-2">全部影片已完成</p>
-            <p className="text-[#9a9a9a] text-sm mb-8">You may now proceed to the post-test questionnaire.</p>
-            <p className="text-[#8a8a8a] text-xs mb-8">你現在可以繼續填寫後測問卷。</p>
+            <p className="text-[#9a9a9a] text-sm mb-8">You may now proceed to the post-viewing feedback and questionnaires.</p>
+            <p className="text-[#8a8a8a] text-xs mb-8">你現在可以繼續填寫觀後回饋與後測問卷。</p>
             <motion.div
               animate={{ y: [0, 8, 0] }}
               transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}

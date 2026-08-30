@@ -54,13 +54,6 @@ export default function Hero({ onMouseMove }: HeroProps) {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [onMouseMove]);
 
-  const scrollToConsent = () => {
-    setTimeout(() => {
-      const consentSection = document.querySelector('[data-section="1"]');
-      consentSection?.scrollIntoView({ behavior: 'smooth' });
-    }, 100);
-  };
-
   return (
     <div
       ref={heroRef}
@@ -165,20 +158,21 @@ export default function Hero({ onMouseMove }: HeroProps) {
           ))}
         </motion.div>
 
-        {/* 開始按鈕 */}
-        <motion.div variants={itemVariants} className="mt-10">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={scrollToConsent}
-            className="btn-gold text-base font-semibold inline-flex items-center gap-3"
-          >
-            <span>Start Study</span>
-            <span className="text-xs opacity-70 font-normal">開始研究</span>
-            <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+        {/* 時間說明（取代原本的「Start Study」按鈕） */}
+        <motion.div variants={itemVariants} className="mt-10 max-w-2xl mx-auto text-center">
+          <div className="inline-flex items-center justify-center gap-2 mb-3">
+            <svg className="w-4 h-4 text-[#d4bfff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
+              <path strokeLinecap="round" strokeWidth={1.5} d="M12 7v5l3 2" />
             </svg>
-          </motion.button>
+            <span className="text-[10px] tracking-[0.25em] uppercase text-[#d4bfff] font-medium">~ 30 min</span>
+          </div>
+          <p className="text-[#c4c4c4] text-base leading-relaxed">
+            The full study takes about 30 minutes. Please reserve enough time to participate.
+          </p>
+          <p className="text-[#9a9a9a] text-sm leading-relaxed mt-2">
+            整個流程約需 30 分鐘，請預留足夠時間參加。
+          </p>
         </motion.div>
       </motion.div>
 

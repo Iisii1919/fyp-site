@@ -16,7 +16,7 @@ export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) 
         viewport={{ once: true }}
         className="text-center mb-10"
       >
-        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2">Post-Viewing Feedback</h1>
+        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2">Viewing Feedback</h1>
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4">觀後回饋</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
 import Hero from '@/components/Hero';
 import InformedConsent from '@/components/InformedConsent';
 import PreTest from '@/components/PreTest';
@@ -202,26 +203,54 @@ export default function Home() {
         />
       </section>
 
-      {/* 4: 觀後回饋 Post-Viewing Feedback */}
+      {/* 4: 觀後回饋 Viewing Feedback */}
       <div className="snap-point"></div>
       <section data-section="4" className="w-full no-snap">
         <PostViewFeedback onComplete={handleFeedbackComplete} />
       </section>
 
-      {/* 5: 後測一 Post-Test 1 */}
+      {/* 5: 分隔頁 — 回饋完成 → 後測 */}
       <div className="snap-point"></div>
-      <section data-section="5" className="w-full no-snap">
+      <section data-section="5" className="h-screen w-full relative overflow-hidden no-snap flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at center, #4a4a4a 0%, #3d3d3d 100%)' }}>
+        <div className="ambient-glow" style={{ width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(198,168,248,0.08) 0%, transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.8 }}
+          className="text-center relative z-10 px-6"
+        >
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full mb-6" style={{ background: 'linear-gradient(135deg, rgba(198,168,248,0.15), rgba(198,168,248,0.05))', border: '1px solid rgba(198,168,248,0.3)' }}>
+            <svg className="w-7 h-7 text-[#d4bfff]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <h2 className="font-serif text-[#EAECEF] text-3xl md:text-4xl font-bold mb-3">感謝你的回饋</h2>
+          <p className="text-[#C6A8F8] text-lg mb-2">Thank you for your feedback</p>
+          <p className="text-[#9a9a9a] text-sm mt-6">接下來請完成後測問卷</p>
+          <p className="text-[#8a8a8a] text-xs mt-1">Next, please complete the post-test questionnaire</p>
+          <motion.div
+            animate={{ y: [0, 8, 0] }}
+            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
+            className="inline-block mt-8"
+          >
+            <svg className="w-6 h-6 text-[#d4bfff] mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* 6: 後測一 Post-Test 1 */}
+      <div className="snap-point"></div>
+      <section data-section="6" className="w-full no-snap">
         <PostTest1 onComplete={handlePostTest1Complete} />
       </section>
 
-      {/* 6: 後測二 Post-Test 2 */}
+      {/* 7: 後測二 Post-Test 2 */}
       <div className="snap-point"></div>
-      <section data-section="6" className="w-full no-snap">
+      <section data-section="7" className="w-full no-snap">
         <PostTest2 onComplete={handlePostTest2Complete} />
       </section>
 
-      {/* 7: 感謝頁 Thank You */}
-      <section data-section="7" className="h-screen w-full overflow-hidden">
+      {/* 8: 感謝頁 Thank You */}
+      <section data-section="8" className="h-screen w-full overflow-hidden">
         <ThankYou participantName="" />
       </section>
     </main>

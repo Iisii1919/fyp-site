@@ -193,9 +193,8 @@ export default function Home() {
         <Hero />
       </section>
 
-      {/* 1: 知情同意書 Informed Consent */}
-      <div className="snap-point"></div>
-      <section data-section="1" className="w-full no-snap">
+      {/* 1: 研究資料 Information Sheet */}
+      <section data-section="1" className="h-screen w-full overflow-hidden">
         <InformedConsent onAccepted={handleConsentAccepted} />
       </section>
 

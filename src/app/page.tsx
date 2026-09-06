@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Hero from '@/components/Hero';
 import InformedConsent from '@/components/InformedConsent';
+import ConsentSignature from '@/components/ConsentSignature';
 import PreTest1 from '@/components/PreTest1';
 import PreTest2 from '@/components/PreTest2';
 import VideoViewer from '@/components/VideoViewer';
@@ -153,12 +154,16 @@ export default function Home() {
     setTimeout(() => scrollToSection(2, 'smooth'), 200);
   };
 
-  const handlePreTest1Complete = () => {
+  const handleSignatureComplete = () => {
     setTimeout(() => scrollToSection(3), 200);
   };
 
-  const handlePreTest2Complete = () => {
+  const handlePreTest1Complete = () => {
     setTimeout(() => scrollToSection(4), 200);
+  };
+
+  const handlePreTest2Complete = () => {
+    setTimeout(() => scrollToSection(5), 200);
   };
 
   const handleVideoProgress = useCallback((progress: number) => {
@@ -166,19 +171,19 @@ export default function Home() {
   }, []);
 
   const handleAllVideosComplete = useCallback(() => {
-    setTimeout(() => scrollToSection(5), 200);
+    setTimeout(() => scrollToSection(6), 200);
   }, []);
 
   const handleFeedbackComplete = () => {
-    setTimeout(() => scrollToSection(6), 200);
-  };
-
-  const handlePostTest1Complete = () => {
     setTimeout(() => scrollToSection(7), 200);
   };
 
-  const handlePostTest2Complete = () => {
+  const handlePostTest1Complete = () => {
     setTimeout(() => scrollToSection(8), 200);
+  };
+
+  const handlePostTest2Complete = () => {
+    setTimeout(() => scrollToSection(9), 200);
   };
 
   return (
@@ -193,20 +198,26 @@ export default function Home() {
         <InformedConsent onAccepted={handleConsentAccepted} />
       </section>
 
-      {/* 2: 前測一 Pre-Test 1 */}
+      {/* 2: 同意書簽署 Consent Signature */}
       <div className="snap-point"></div>
       <section data-section="2" className="w-full no-snap">
+        <ConsentSignature onComplete={handleSignatureComplete} />
+      </section>
+
+      {/* 3: 前測一 Pre-Test 1 */}
+      <div className="snap-point"></div>
+      <section data-section="3" className="w-full no-snap">
         <PreTest1 onComplete={handlePreTest1Complete} />
       </section>
 
-      {/* 3: 前測二 Pre-Test 2 */}
+      {/* 4: 前測二 Pre-Test 2 */}
       <div className="snap-point"></div>
-      <section data-section="3" className="w-full no-snap">
+      <section data-section="4" className="w-full no-snap">
         <PreTest2 onComplete={handlePreTest2Complete} />
       </section>
 
-      {/* 4: 影片區 Video Viewer（外層不吸附，內部各視頻/過渡頁獨立吸附） */}
-      <section data-section="4" className="w-full no-snap">
+      {/* 5: 影片區 Video Viewer（外層不吸附，內部各視頻/過渡頁獨立吸附） */}
+      <section data-section="5" className="w-full no-snap">
         <VideoViewer
           onProgress={handleVideoProgress}
           progress={videoProgress}
@@ -214,15 +225,15 @@ export default function Home() {
         />
       </section>
 
-      {/* 5: 觀後回饋 Viewing Feedback */}
+      {/* 6: 觀後回饋 Viewing Feedback */}
       <div className="snap-point"></div>
-      <section data-section="5" className="w-full no-snap">
+      <section data-section="6" className="w-full no-snap">
         <PostViewFeedback onComplete={handleFeedbackComplete} />
       </section>
 
-      {/* 6: 分隔頁 — 回饋完成 → 後測 */}
+      {/* 7: 分隔頁 — 回饋完成 → 後測 */}
       <div className="snap-point"></div>
-      <section data-section="6" className="h-screen w-full relative overflow-hidden no-snap flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at center, #4a4a4a 0%, #3d3d3d 100%)' }}>
+      <section data-section="7" className="h-screen w-full relative overflow-hidden no-snap flex items-center justify-center" style={{ background: 'radial-gradient(ellipse at center, #4a4a4a 0%, #3d3d3d 100%)' }}>
         <div className="ambient-glow" style={{ width: '500px', height: '500px', background: 'radial-gradient(circle, rgba(198,168,248,0.08) 0%, transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -248,20 +259,20 @@ export default function Home() {
         </motion.div>
       </section>
 
-      {/* 7: 後測一 Post-Test 1 */}
+      {/* 8: 後測一 Post-Test 1 */}
       <div className="snap-point"></div>
-      <section data-section="7" className="w-full no-snap">
+      <section data-section="8" className="w-full no-snap">
         <PostTest1 onComplete={handlePostTest1Complete} />
       </section>
 
-      {/* 8: 後測二 Post-Test 2 */}
+      {/* 9: 後測二 Post-Test 2 */}
       <div className="snap-point"></div>
-      <section data-section="8" className="w-full no-snap">
+      <section data-section="9" className="w-full no-snap">
         <PostTest2 onComplete={handlePostTest2Complete} />
       </section>
 
-      {/* 9: 感謝頁 Thank You */}
-      <section data-section="9" className="h-screen w-full overflow-hidden">
+      {/* 10: 感謝頁 Thank You */}
+      <section data-section="10" className="h-screen w-full overflow-hidden">
         <ThankYou participantName="" />
       </section>
     </main>

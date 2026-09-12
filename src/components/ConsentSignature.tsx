@@ -11,16 +11,27 @@ const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSdsPN6zMjcZmsLTYfugdrTYpKOVxzYAZZsAo6UKDGE-LFPK3A/viewform?embedded=true';
 
 // 讓整份同意書一次顯示完、不產生 iframe 內頁捲軸。
-// 以真實裝置視口（Emulation.setDeviceMetricsOverride）實測兩頁表單內容高度：
-//   第 1 頁（同意書正文 + 確認勾選）：
-//     寬 768px → 1402px ／ 640px → 1530px ／ 480px → 1774px ／ 390px → 2033px
-//   第 2 頁（電子簽署）不隨寬度重排：約 1480px（寬 767px 時略高於第 1 頁）
-// 以下高度 = 兩頁取較高者 + 約 25px 緩衝，確保翻頁後送出鈕不因內頁捲軸被裁掉。
+//
+// 2026-09-13 重測：表單已從「兩頁」合併成「單頁」（同意書正文＋勾選＋簽名＋日期＋確認都在同一頁），
+// 內容變高很多，原本的 1505px 已經不夠 → 出現內頁捲軸。
+// 以 CDP 實際量測 iframe 內文件的 scrollHeight（iframe 設 300px 高讓內容溢出才量得到真實高度）：
+//   768px → 2399 ／ 640px → 2527 ／ 560px → 2571 ／ 480px → 2775 ／ 440px → 2859
+//   390px → 3010 ／ 360px → 3158 ／ 340px → 3310 ／ 320px → 3434
+//   300px → 3534 ／ 288px → 3646 ／ 276px → 3834
+// 每個級距取「該級距最小寬度」的量測值 + 約 30px 緩衝（寬度越小內容越高）。
 const heightForWidth = (w: number) => {
-  if (w >= 720) return 1505;
-  if (w >= 560) return 1555;
-  if (w >= 440) return 1800;
-  return 2060;
+  if (w >= 720) return 2430; // 量測 2399（容器 max-w-3xl，實際不會超過 768）
+  if (w >= 640) return 2560; // 量測 2527
+  if (w >= 560) return 2600; // 量測 2571
+  if (w >= 480) return 2810; // 量測 2775
+  if (w >= 440) return 2890; // 量測 2859
+  if (w >= 390) return 3040; // 量測 3010
+  if (w >= 360) return 3190; // 量測 3158
+  if (w >= 340) return 3340; // 量測 3310
+  if (w >= 320) return 3470; // 量測 3434
+  if (w >= 300) return 3570; // 量測 3534
+  if (w >= 280) return 3690; // 量測 3646
+  return 3880; // 量測 3834（276px）
 };
 
 // ⚠️ 同意書表單目前有幾頁。
@@ -36,7 +47,7 @@ interface ConsentSignatureProps {
 
 export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
-  const [formHeight, setFormHeight] = useState(1505);
+  const [formHeight, setFormHeight] = useState(2430);
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
 

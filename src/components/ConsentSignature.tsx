@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
@@ -22,16 +22,43 @@ const heightForWidth = (w: number) => {
   return 2060;
 };
 
-export default function ConsentSignature() {
+// ⚠️ 同意書表單目前有幾頁。
+// 現況是「兩頁」：第一頁同意書正文＋確認勾選，第二頁簽名／日期／確認。
+// 兩頁表單翻頁時 Google 會重新載入整份文件，與「送出」長得一模一樣，
+// 跨網域無法分辨，所以 pages=2 時不做任何自動判斷（只給手動收合鈕）。
+//
+// 在 Google Form 把兩個區段合併成「單頁」之後，把這裡改成 1，
+// 就會自動啟用：送出後自動收合 + 自動前往前測問卷。
+const CONSENT_FORM_PAGES = 2;
+
+interface ConsentSignatureProps {
+  onNext?: () => void;
+}
+
+export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [formHeight, setFormHeight] = useState(1505);
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
+  const advanceTimer = useRef<number | null>(null);
 
   // 把 Participant ID / Group 帶進同意書表單（表單需先有這兩個簡答題）。
   useEffect(() => {
     setSrc(buildPrefill(FORM_SRC, 'consentSignature', participant));
   }, [participant]);
+
+  // 送出後先讓參與者看到「已成功遞交」，再自動前往前測問卷。
+  const handleSubmitted = useCallback(() => {
+    if (advanceTimer.current !== null) return;
+    advanceTimer.current = window.setTimeout(() => onNext?.(), 1600);
+  }, [onNext]);
+
+  useEffect(
+    () => () => {
+      if (advanceTimer.current !== null) window.clearTimeout(advanceTimer.current);
+    },
+    [],
+  );
 
   // 依容器實際寬度決定 iframe 高度（視窗縮放時自動更新）
   useEffect(() => {
@@ -68,23 +95,33 @@ export default function ConsentSignature() {
       </motion.div>
 
       {/* Google Form iframe（高度依寬度自適應）。
-          pages={2}：同意書是兩頁式表單，翻頁會重新載入文件，
-          無法與「送出」區分，所以不做自動收合，只提供手動收合鈕，
-          避免參與者按「繼續」翻到第二頁時表單突然變短。 */}
+          pages 由 CONSENT_FORM_PAGES 決定；合併成單頁後就會自動收合 + 自動進入前測。 */}
       <div ref={wrapRef} className="w-full max-w-3xl">
         <GoogleFormEmbed
           src={src}
           height={formHeight}
           title="Consent to Participate in Research"
-          pages={2}
+          pages={CONSENT_FORM_PAGES}
+          onSubmitted={handleSubmitted}
         />
       </div>
 
+      {/* 繼續按鈕：放在表單正下方，送出後不用再滑到底部找箭頭。
+          合併成單頁表單後，送出會自動前往，這顆就只是備援。 */}
+      {onNext && (
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={onNext}
+          className="btn-gold text-base font-semibold inline-flex items-center gap-3 mt-8"
+        >
+          <span>Continue</span>
+          <span className="text-xs opacity-70 font-normal">已完成簽署，繼續</span>
+        </motion.button>
+      )}
+
       {/* 表單下方的小提示（不擋 StepFooter） */}
-      <p className="text-[#9a9a9a] text-sm mt-8 mb-4 text-center">
-        After you have submitted the signed form, continue to the pre-test questionnaire.
-      </p>
-      <p className="text-[#8a8a8a] text-xs mb-24 text-center">
+      <p className="text-[#8a8a8a] text-xs mt-4 mb-24 text-center">
         完成簽署並遞交後，即可繼續填寫前測問卷。
       </p>
     </div>

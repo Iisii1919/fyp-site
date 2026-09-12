@@ -159,7 +159,7 @@ export default function Home() {
 
         {step === 2 && (
           <section className="relative w-full no-snap">
-            <ConsentSignature />
+            <ConsentSignature onNext={goNext} />
             <StepFooter onBack={goBack} onNext={goNext} canBack canNext />
           </section>
         )}

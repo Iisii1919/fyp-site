@@ -11,12 +11,14 @@ interface GoogleFormEmbedProps {
    * 表單頁數（預設 1）。
    *
    * 1 = 單頁：整份表單只有一個頁面，送出是唯一會讓 iframe「同一個 src 再載入一次」的原因
-   *     → 可以安全地自動收合。
+   *     → 可以安全地自動收合，並可進一步自動前往下一步。
    * >1 = 多頁：按「繼續 / 返回」翻頁時 Google 會重新載入整份文件，iframe 一樣會再 load 一次。
    *     跨網域讀不到 iframe 內容，無法分辨「翻頁」與「送出」，自動判斷必然誤收合，
    *     因此多頁表單只提供手動收合，不做自動判斷。
    */
   pages?: number;
+  /** 偵測到「已送出」時呼叫。只有單頁表單（pages <= 1）才會觸發，且只觸發一次。 */
+  onSubmitted?: () => void;
 }
 
 // 嵌入 Google Form 的白底卡片。
@@ -28,17 +30,24 @@ interface GoogleFormEmbedProps {
 // 判斷方式（2026-09-13 以 CDP 實際驅動 Chrome 驗證）：
 //   - iframe 再次 load 且 src 沒有改變 → 這才是「同一個表單被重新載入」。
 //     用 src 是否改變來排除「帶入 prefill 造成的重新載入」這個誤判來源。
-//   - 翻頁（繼續／返回）也會重新載入文件、也會再 load 一次 → 所以 pages > 1 時不自動收合。
+//   - 翻頁（繼續／返回）也會重新載入文件、也會再 load 一次 → 所以 pages > 1 時不自動判斷。
 //   - Google 的嵌入表單不會對外送 postMessage（實測 0 則），故不採用該訊號。
 // 收合後仍提供「展開表單」按鈕，即使判斷有誤使用者也能自行復原。
 const SUBMITTED_HEIGHT = 460;
 
-export default function GoogleFormEmbed({ src, height, title, pages = 1 }: GoogleFormEmbedProps) {
+export default function GoogleFormEmbed({
+  src,
+  height,
+  title,
+  pages = 1,
+  onSubmitted,
+}: GoogleFormEmbedProps) {
   // 記住「上一次載入完成時的 src」。
   // 這個判斷很關鍵：頁面一開始用未帶 prefill 的網址，等 participant 就緒後會換成
   // 帶 prefill 的網址，iframe 因此會多載入一次。若把那一次算成送出，
   // 表單會在剛載入時就被收合。所以只有「src 沒變卻又 reload」才視為送出。
   const lastLoadedSrc = useRef<string | null>(null);
+  const fired = useRef(false);
   const [collapsed, setCollapsed] = useState(false);
 
   // 只有單頁表單可以自動判斷送出；多頁表單的翻頁會造成誤判。
@@ -74,6 +83,10 @@ export default function GoogleFormEmbed({ src, height, title, pages = 1 }: Googl
             // 首次載入、或 src 變更（帶入 prefill）造成的重新載入 → 不算送出
             if (prev === null || prev !== src) return;
             setCollapsed(true);
+            if (!fired.current) {
+              fired.current = true;
+              onSubmitted?.();
+            }
           }}
         >
           載入中… Loading…

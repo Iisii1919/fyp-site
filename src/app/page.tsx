@@ -190,7 +190,7 @@ export default function Home() {
 
         {step === 6 && (
           <section className="relative w-full no-snap">
-            <PostViewFeedback />
+            <PostViewFeedback onComplete={goNext} />
             <StepFooter onBack={goBack} onNext={goNext} canBack canNext />
           </section>
         )}

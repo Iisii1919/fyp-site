@@ -4,18 +4,21 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
+import { useAutoAdvance } from '@/lib/useAutoAdvance';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 
 interface PreTest2Props {
+  /** 送出後自動前往下一步（這是前測頁的最後一份問卷）。 */
   onComplete?: () => void;
 }
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSdhW3ivEplLsKicsqOdBVn7aY0kmuI_w8Mml_DcJst1htX4bw/viewform?embedded=true';
 
-export default function PreTest2({ onComplete: _onComplete }: PreTest2Props) {
+export default function PreTest2({ onComplete }: PreTest2Props) {
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
+  const handleSubmitted = useAutoAdvance(onComplete);
 
   useEffect(() => {
     setSrc(buildPrefill(FORM_SRC, 'preTest2', participant));
@@ -49,12 +52,17 @@ export default function PreTest2({ onComplete: _onComplete }: PreTest2Props) {
         </p>
       </motion.div>
 
-      {/* Google Form iframe（提交後自動收合，避免下方留下大片空白） */}
-      <GoogleFormEmbed src={src} height={3894} title="Pre-Test Questionnaire 2" />
+      {/* Google Form iframe（送出後自動收合，並自動前往下一步） */}
+      <GoogleFormEmbed
+        src={src}
+        height={3894}
+        title="Pre-Test Questionnaire 2"
+        onSubmitted={handleSubmitted}
+      />
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
-        提交問卷後，請點擊下方 ▼ 觀看影片。
+        提交問卷後會自動繼續下一步。
       </p>
     </div>
   );

@@ -26,7 +26,8 @@ export default function PreTest({ onBack, onNext }: PreTestProps) {
         </div>
       </div>
 
-      <PreTest2 />
+      {/* 第二份是最後一份問卷 → 送出後自動前往下一步 */}
+      <PreTest2 onComplete={onNext} />
 
       <StepFooter onBack={onBack} onNext={onNext} canBack canNext />
     </div>

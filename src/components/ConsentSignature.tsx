@@ -1,10 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
+import { useAutoAdvance } from '@/lib/useAutoAdvance';
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSdsPN6zMjcZmsLTYfugdrTYpKOVxzYAZZsAo6UKDGE-LFPK3A/viewform?embedded=true';
@@ -23,13 +24,11 @@ const heightForWidth = (w: number) => {
 };
 
 // ⚠️ 同意書表單目前有幾頁。
-// 現況是「兩頁」：第一頁同意書正文＋確認勾選，第二頁簽名／日期／確認。
-// 兩頁表單翻頁時 Google 會重新載入整份文件，與「送出」長得一模一樣，
-// 跨網域無法分辨，所以 pages=2 時不做任何自動判斷（只給手動收合鈕）。
-//
-// 在 Google Form 把兩個區段合併成「單頁」之後，把這裡改成 1，
-// 就會自動啟用：送出後自動收合 + 自動前往前測問卷。
-const CONSENT_FORM_PAGES = 2;
+// 2026-09-13：已把 Google Form 的「簽名區段」並回第一頁，現在是「單頁」→ 設 1，
+// 送出後會自動收合 + 自動前往前測問卷。
+// 若日後又在表單裡加入新的區段（變回多頁），務必改回 2：
+// 多頁表單按「繼續」翻頁也會重新載入文件，會被誤判成已送出。
+const CONSENT_FORM_PAGES = 1;
 
 interface ConsentSignatureProps {
   onNext?: () => void;
@@ -40,25 +39,14 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
   const [formHeight, setFormHeight] = useState(1505);
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
-  const advanceTimer = useRef<number | null>(null);
+
+  // 送出後停留一下讓參與者看到「已成功遞交」，再自動前往前測。
+  const handleSubmitted = useAutoAdvance(onNext);
 
   // 把 Participant ID / Group 帶進同意書表單（表單需先有這兩個簡答題）。
   useEffect(() => {
     setSrc(buildPrefill(FORM_SRC, 'consentSignature', participant));
   }, [participant]);
-
-  // 送出後先讓參與者看到「已成功遞交」，再自動前往前測問卷。
-  const handleSubmitted = useCallback(() => {
-    if (advanceTimer.current !== null) return;
-    advanceTimer.current = window.setTimeout(() => onNext?.(), 1600);
-  }, [onNext]);
-
-  useEffect(
-    () => () => {
-      if (advanceTimer.current !== null) window.clearTimeout(advanceTimer.current);
-    },
-    [],
-  );
 
   // 依容器實際寬度決定 iframe 高度（視窗縮放時自動更新）
   useEffect(() => {

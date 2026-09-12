@@ -4,9 +4,11 @@ import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
+import { useAutoAdvance } from '@/lib/useAutoAdvance';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 
 interface PostViewFeedbackProps {
+  /** 送出後自動前往下一步（這一頁只有這份問卷）。 */
   onComplete?: () => void;
 }
 
@@ -25,11 +27,12 @@ const heightForWidth = (w: number) => {
   return 1580;
 };
 
-export default function PostViewFeedback({ onComplete: _onComplete }: PostViewFeedbackProps) {
+export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const [formHeight, setFormHeight] = useState(1320);
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
+  const handleSubmitted = useAutoAdvance(onComplete);
 
   useEffect(() => {
     setSrc(buildPrefill(FORM_SRC, 'viewingFeedback', participant));
@@ -69,14 +72,19 @@ export default function PostViewFeedback({ onComplete: _onComplete }: PostViewFe
         </p>
       </motion.div>
 
-      {/* Google Form iframe（高度依寬度自適應；提交後自動收合，避免留下大片空白） */}
+      {/* Google Form iframe（高度依寬度自適應；送出後自動收合並自動繼續） */}
       <div ref={wrapRef} className="w-full max-w-3xl">
-        <GoogleFormEmbed src={src} height={formHeight} title="Viewing Feedback" />
+        <GoogleFormEmbed
+          src={src}
+          height={formHeight}
+          title="Viewing Feedback"
+          onSubmitted={handleSubmitted}
+        />
       </div>
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
-        提交後，請點擊下方按鈕繼續。
+        提交後會自動繼續下一步。
       </p>
     </div>
   );

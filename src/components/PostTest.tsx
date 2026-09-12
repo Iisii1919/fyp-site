@@ -25,7 +25,8 @@ export default function PostTest({ onBack, onNext }: PostTestProps) {
         </div>
       </div>
 
-      <PostTest2 />
+      {/* 第二份是最後一份問卷 → 送出後自動完成研究 */}
+      <PostTest2 onComplete={onNext} />
 
       <StepFooter onBack={onBack} onNext={onNext} canBack canNext />
     </div>

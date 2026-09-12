@@ -110,7 +110,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
         {/* 主標題 */}
         <motion.div variants={itemVariants} className="mb-6">
           <h1 className="font-serif font-bold leading-[1.05]">
-            <span className="block text-[#FFFFFF]">Dark Film</span>
+            <span className="block text-[#FFFFFF]">Sadness Film</span>
             <span className="block text-accent-gradient italic mt-2">on Resilience</span>
           </h1>
         </motion.div>
@@ -118,7 +118,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
         {/* 副標題 */}
         <motion.div variants={itemVariants} className="mb-10">
           <h2 className="text-[#EAECEF] font-serif font-medium tracking-wide">
-            黑暗電影與心理韌性研究
+            傷感電影與心理韌性研究
           </h2>
         </motion.div>
 
@@ -132,10 +132,10 @@ export default function Hero({ onMouseMove }: HeroProps) {
         {/* 描述 */}
         <motion.div variants={itemVariants} className="max-w-2xl mx-auto mb-14">
           <p className="text-[#c4c4c4] text-lg leading-relaxed">
-            This study aims to explore the influence of dark film on psychological resilience.
+            This study aims to explore the influence of sadness film on psychological resilience.
           </p>
           <p className="text-[#9a9a9a] text-base mt-3 leading-relaxed">
-            本研究旨在探討黑暗電影對心理韌性的影響。
+            本研究旨在探討傷感電影對心理韌性的影響。
           </p>
         </motion.div>
 
@@ -174,23 +174,6 @@ export default function Hero({ onMouseMove }: HeroProps) {
             整個流程約需 30 分鐘，請預留足夠時間參加。
           </p>
         </motion.div>
-      </motion.div>
-
-      {/* 滾動提示 */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 2, duration: 1 }}
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2"
-      >
-        <div className="w-6 h-10 rounded-full border border-[rgba(198,168,248,0.32)] flex justify-center pt-2">
-          <motion.div
-            animate={{ y: [0, 8, 0] }}
-            transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-            className="w-1 h-2 rounded-full bg-[#d4bfff]"
-          />
-        </div>
-        <span className="text-[10px] tracking-[0.25em] uppercase text-[#9a9a9a]">Scroll</span>
       </motion.div>
     </div>
   );

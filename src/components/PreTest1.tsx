@@ -1,12 +1,26 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useParticipant } from '@/lib/participant';
+import { buildPrefill } from '@/lib/formPrefill';
+import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 
 interface PreTest1Props {
-  onComplete: () => void;
+  onComplete?: () => void;
 }
 
-export default function PreTest1({ onComplete }: PreTest1Props) {
+const FORM_SRC =
+  'https://docs.google.com/forms/d/e/1FAIpQLScVhr-y__tyvPHGai_h0jRF9Db6pPLZdqTE-O6GeC5qd9oj6A/viewform?embedded=true';
+
+export default function PreTest1({ onComplete: _onComplete }: PreTest1Props) {
+  const participant = useParticipant();
+  const [src, setSrc] = useState(FORM_SRC);
+
+  useEffect(() => {
+    setSrc(buildPrefill(FORM_SRC, 'preTest1', participant));
+  }, [participant]);
+
   return (
     <div className="w-full min-h-screen flex flex-col items-center px-4 py-12 relative" style={{ background: 'radial-gradient(ellipse at 50% 0%, #545454 0%, #3d3d3d 50%, #3d3d3d 100%)' }}>
       {/* 標題 */}
@@ -27,51 +41,13 @@ export default function PreTest1({ onComplete }: PreTest1Props) {
         </p>
       </motion.div>
 
-      {/* Google Form iframe */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.2 }}
-        className="w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl border border-[rgba(198,168,248,0.18)]"
-      >
-        <iframe
-          src="https://docs.google.com/forms/d/e/1FAIpQLScVhr-y__tyvPHGai_h0jRF9Db6pPLZdqTE-O6GeC5qd9oj6A/viewform?embedded=true"
-          width="100%"
-          height="2568"
-          frameBorder="0"
-          marginHeight={0}
-          marginWidth={0}
-          title="Pre-Test Questionnaire 1"
-        >
-          載入中… Loading…
-        </iframe>
-      </motion.div>
+      {/* Google Form iframe（提交後自動收合，避免下方留下大片空白） */}
+      <GoogleFormEmbed src={src} height={2568} title="Pre-Test Questionnaire 1" />
 
-      {/* 滾動提示 */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.4 }}
-        className="mt-12 mb-12 text-center"
-      >
-        <p className="text-[#9a9a9a] text-sm mb-2">
-          After submitting the form, scroll down to continue to the next questionnaire.
-        </p>
-        <p className="text-[#8a8a8a] text-xs mb-6">
-          提交問卷後，向下滾動繼續填寫下一份問卷。
-        </p>
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 1.8, repeat: Infinity, ease: 'easeInOut' }}
-          className="inline-block"
-        >
-          <svg className="w-6 h-6 text-[#d4bfff] mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
-          </svg>
-        </motion.div>
-      </motion.div>
+      {/* 表單下方的小提示（不擋 StepFooter） */}
+      <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
+        提交問卷後，請繼續填寫下一份問卷。
+      </p>
     </div>
   );
 }

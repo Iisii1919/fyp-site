@@ -23,7 +23,7 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
 
   return (
     <div
-      className="h-screen w-full flex items-center justify-center p-4 md:p-8 overflow-auto relative"
+      className="min-h-screen w-full flex flex-col items-center pt-4 px-4 pb-44 md:pt-8 md:px-8 md:pb-48 relative"
       style={{ background: 'radial-gradient(ellipse at 30% 50%, #545454 0%, #3d3d3d 60%, #3d3d3d 100%)' }}
     >
       {/* 環境光 */}
@@ -40,7 +40,7 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
         initial={{ opacity: 0, y: 40 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, ease: [0.25, 0.46, 0.45, 0.94] }}
-        className="max-w-4xl w-full relative z-10"
+        className="max-w-4xl w-full relative z-10 my-auto"
       >
         {/* 標題區 */}
         <div className="text-center mb-8">
@@ -144,9 +144,7 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
           >
             <span>I Agree &amp; Continue</span>
             <span className="text-xs opacity-70 font-normal">我同意並繼續</span>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-            </svg>
+
           </motion.button>
         </motion.div>
       </motion.div>

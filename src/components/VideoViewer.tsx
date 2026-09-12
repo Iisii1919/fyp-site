@@ -2,19 +2,44 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useParticipant, type Group } from '@/lib/participant';
 
 interface VideoViewerProps {
   onProgress: (progress: number) => void;
   progress: number;
   onAllComplete?: () => void;
+  group?: Group;
 }
 
-const videoClips = [
-  { id: 1, title: 'Aftersun', titleZh: '日麗', desc: 'A young girl recalls a holiday with her father in Turkey. In the home videos, he often seems quietly withdrawn. She later realises that trip was the last time she saw him, as he died by suicide shortly after. The excerpt here is the scene where she gathers strangers to sing him a birthday song, yet it only deepens his melancholy.', descZh: '女孩在家中找到了小時候與父親去土耳其旅遊的錄像，父親在錄像中總是鬱鬱寡歡，女孩回想起那次是她最後一次見到父親，因為父親那天之後就自殺身亡了。右邊的片段是女孩召集了途人為父親唱生日歌，卻只引來了父親的憂鬱。', duration: '2:23', src: 'aftersun-3.mov' },
+interface Clip {
+  id: number;
+  title: string;
+  titleZh: string;
+  desc: string;
+  descZh: string;
+  duration: string;
+  src: string;
+}
+
+// sadness 組：原 5 支反思片，2026-09-09 依使用者要求精簡為 4 支（移除 Se7en / 七宗罪）。
+// 5 片段備份見 sadnessClips.5clip.backup.ts（sadnessClips5）。
+const sadnessClips: Clip[] = [
+  { id: 1, title: 'Aftersun', titleZh: '日麗', desc: 'A young girl recalls a holiday with her father in Turkey. In the home videos, he often seems quietly withdrawn. She later realises that trip was the last time she saw him, as he died by suicide shortly after. The excerpt here is the scene where she gathers strangers to sing him a birthday song, yet it only deepens his melancholy.', descZh: '女孩在家中找到了小時候與父親去土耳其旅遊的錄像，父親在錄像中總是鬱鬱寡歡，女孩回想起那次是她最後一次見到父親。右邊的片段是女孩召集了途人為父親唱生日歌，卻只引來了父親的憂鬱。', duration: '2:23', src: 'aftersun-3.mov' },
   { id: 2, title: 'Didi', titleZh: '弟弟', desc: 'A Chinese-American boy born in the United States struggles deeply with his sense of identity, which leaves him unable to form stable relationships. In a heated argument he unleashes all his anger on his mother, and in his despair he comes to see himself as a disgrace to the family.', descZh: '生於美國的華裔男孩對於自己的身份認同有很大的困惑，使得他很難得到穩定的人際關係。他在一次爭吵中將全部怒氣拋給母親，極度傷心的他認爲自己是家庭的耻辱。', duration: '4:47', src: 'didi-2.mov' },
-  { id: 3, title: 'Se7en', titleZh: '七宗罪', desc: 'A dutiful detective finally captures a serial killer. After striking a deal with him, the detective is taken to a remote spot as agreed — when a truck suddenly drives in, delivering the severed head of the detective\'s wife. Consumed by despair, the detective cannot restrain himself from shooting the killer, which is exactly what the murderer intended.', descZh: '盡忠職守的警探抓到了連環殺手，警探與殺手交易按要求去到郊外，一輛貨車突然駛入，送來的竟是警探妻子的頭顱，絕望的警探不能克制自己開槍殺死殺手，正好滿足了殺手的意圖。', duration: '4:21', src: 'seven-2.mov' },
-  { id: 4, title: 'Manchester by the Sea', titleZh: '情繫海邊之城', desc: 'After his brother\'s sudden death, he returns to the hometown he had long left behind, and is overwhelmed once more by the guilt he carries for himself. Years ago, a drunken accident sparked a fire that killed his three children; he tried to take his own life but was stopped. To this day he cannot live with his own fault, and cannot bring himself to stay in that town.', descZh: '因爲哥哥突然死亡而回到了離開已久的家鄉，也回想起了對自己的悔恨。當年醉酒意外觸發火災害死了自己三個子女，試圖自殺但被阻止。他到今天也無法忍受自己的過失，無法待在家鄉。', duration: '5:45', src: 'manchester-1.mov' },
-  { id: 5, title: 'All About Lily Chou-Chou', titleZh: '青春電幻物語', desc: 'everyday beauty and anguish are intertwined； a girl coerced into prostitution after her weakness is exploited laughs cheerfully, then falls from a great height; the raving of online trolls; a bellowing bully; and a boy who retreats into music to escape reality.', descZh: '日常美好與苦惱交織的畫面；被抓住弱點而被迫援交的女孩歡快地笑著，隨後又從高處墜下;網絡上的瘋言瘋語；咆哮的霸凌者；沉浸於音樂以逃避現實的少年。', duration: '5:10', src: 'lily-chou-1.mov' },
+  { id: 3, title: 'Manchester by the Sea', titleZh: '情繫海邊之城', desc: 'After his brother\'s sudden death, he returns to the hometown he had long left behind, and is overwhelmed once more by the guilt he carries for himself. Years ago, a drunken accident sparked a fire that killed his three children; he tried to take his own life but was stopped. To this day he cannot live with his own fault, and cannot bring himself to stay in that town.', descZh: '因爲哥哥突然死亡而回到了離開已久的家鄉，也回想起了對自己的悔恨。當年醉酒意外觸發火災害死了自己三個子女，試圖自殺但被阻止。他到今天也無法忍受自己的過失，無法待在家鄉。', duration: '5:45', src: 'manchester-1.mov' },
+  { id: 4, title: 'All About Lily Chou-Chou', titleZh: '青春電幻物語', desc: 'everyday beauty and anguish are intertwined； a girl coerced into prostitution after her weakness is exploited laughs cheerfully, then falls from a great height; the raving of online trolls; a bellowing bully; and a boy who retreats into music to escape reality.', descZh: '日常美好與苦惱交織的畫面；被抓住弱點而被迫援交的女孩歡快地笑著，隨後又從高處墜下;網絡上的瘋言瘋語；咆哮的霸凌者；沉浸於音樂以逃避現實的少年。', duration: '5:10', src: 'lily-chou-1.mov' },
+];
+
+// neutral 組 — four short film excerpts (hosted on R2).
+// ⚠️ 4 支影片的中英文片名（title / titleZh）已由研究人員從截圖確認為「香港翻譯」版本
+// （2026-09-08 提供），請勿修改。中文描述（descZh）與對應英文描述（desc）
+// 於 2026-09-12 依使用者提供的最新截圖再次修訂。
+// 仍可調整的是 src（檔名）與 duration（影片秒數的 fallback）。
+const neutralClips: Clip[] = [
+  { id: 1, title: 'Before Sunset', titleZh: '日落巴黎', desc: 'A man and a woman are reluctant to part, lingering even though they will miss their flight. They talk and laugh, and the itinerary no longer matters.', descZh: '男女對彼此依依不捨，即使趕不上飛機也不捨得離開，他們有說有笑，行程早已不重要。', duration: '1:25', src: 'before-sunset-1.mov' },
+  { id: 2, title: 'Paris, Texas', titleZh: '德州巴黎', desc: 'A child separated from his mother by his parents\' divorce finally meets her again, and they hold each other tightly. The father chooses to step away, leaving the space to mother and son.', descZh: '因父母離異而與母親分離的孩子終於和母親見面，他們緊緊相擁在一起，而父親則是選擇離開，將空間留給母子。', duration: '2:00', src: 'taxa-paris-1.mov' },
+  { id: 3, title: 'The Pursuit of Happyness', titleZh: '尋找快樂的故事', desc: 'A man finally gets the job he has always dreamed of. He hugs his son tightly and sighs that the hardest days are now behind them.', descZh: '男人得到了夢寐以求的工作，他緊緊擁抱兒子，感嘆最辛苦的日子已經過去。', duration: '2:30', src: 'the-pursuit-1.mov' },
+  { id: 4, title: 'About Time', titleZh: '真愛每一天', desc: 'A man learns to live in the present. In everyday life, his wife and daughter already make him deeply happy; he decides to stop worrying about what he might miss, and instead welcome a new day.', descZh: '男人學會了活在當下，日常中他的妻女已經令他感到很幸福，他決定不再擔心錯過，而是迎接新的一天。', duration: '2:00', src: 'about-time-1.mov' },
 ];
 
 // 影片來源：預設走本地 /videos/（開發用）。部署時請設 NEXT_PUBLIC_VIDEO_BASE_URL 指向
@@ -51,7 +76,7 @@ function VideoPlayer({
   isCompleted,
   onComplete,
 }: {
-  clip: typeof videoClips[0];
+  clip: Clip;
   index: number;
   total: number;
   isCompleted: boolean;
@@ -529,7 +554,7 @@ function VideoPlayer({
 }
 
 // 視頻之間的過渡頁
-function TransitionPage({ nextClip, nextIndex }: { nextClip: typeof videoClips[0]; nextIndex: number }) {
+function TransitionPage({ nextClip, nextIndex }: { nextClip: Clip; nextIndex: number }) {
   return (
     <div
       className="h-screen w-full flex items-center justify-center relative scroll-snap-start overflow-hidden"
@@ -569,9 +594,15 @@ function TransitionPage({ nextClip, nextIndex }: { nextClip: typeof videoClips[0
   );
 }
 
-export default function VideoViewer({ onProgress, progress, onAllComplete }: VideoViewerProps) {
+export default function VideoViewer({ onProgress, progress, onAllComplete, group }: VideoViewerProps) {
   const [completedVideos, setCompletedVideos] = useState<number[]>([]);
   const rootRef = useRef<HTMLDivElement>(null);
+  const participant = useParticipant();
+
+  // 選擇播放清單：neutral 組播 4 支短片，sadness 組播 4 支反思片。
+  // 優先使用 props 傳入的 group，否則從 ParticipantContext 讀取既有分配。
+  const resolvedGroup = group ?? participant?.group ?? 'sadness';
+  const clips = resolvedGroup === 'neutral' ? neutralClips : sadnessClips;
 
   // 進度更新和全部完成的回調必須放在 effect 裡，
   // 不能寫在 setState updater 內（React 18 會在渲染期間呼叫 updater，
@@ -583,13 +614,13 @@ export default function VideoViewer({ onProgress, progress, onAllComplete }: Vid
   }, []);
 
   useEffect(() => {
-    onProgress((completedVideos.length / videoClips.length) * 100);
-    if (completedVideos.length === videoClips.length && onAllComplete) {
+    onProgress((completedVideos.length / clips.length) * 100);
+    if (completedVideos.length === clips.length && onAllComplete) {
       onAllComplete();
     }
   }, [completedVideos, onProgress, onAllComplete]);
 
-  const allCompleted = completedVideos.length === videoClips.length;
+  const allCompleted = completedVideos.length === clips.length;
 
   return (
     <div className="w-full relative" ref={rootRef}>
@@ -620,10 +651,10 @@ export default function VideoViewer({ onProgress, progress, onAllComplete }: Vid
           </h1>
           <p className="text-[#C6A8F8] text-lg md:text-xl font-serif mb-2 text-center">享受這段旅程</p>
           <p className="text-[#9a9a9a] text-sm mb-4 text-center">
-            You are about to watch five short film excerpts. Take your time, and scroll down when you are ready.
+            You are about to watch {clips.length} short film excerpts. Take your time, and scroll down when you are ready.
           </p>
           <p className="text-[#8a8a8a] text-xs mb-10 text-center">
-            你即將觀看五個短片片段。請慢慢觀賞，準備好後向下滾動。
+            你即將觀看 {clips.length} 個短片片段。請慢慢觀賞，準備好後向下滾動。
           </p>
           <motion.div
             animate={{ y: [0, 10, 0] }}
@@ -638,17 +669,17 @@ export default function VideoViewer({ onProgress, progress, onAllComplete }: Vid
       </div>
 
       {/* 5 個視頻 + 過渡頁 */}
-      {videoClips.map((clip, index) => (
+      {clips.map((clip, index) => (
         <div key={clip.id}>
           <VideoPlayer
             clip={clip}
             index={index}
-            total={videoClips.length}
+            total={clips.length}
             isCompleted={completedVideos.includes(clip.id)}
             onComplete={handleComplete}
           />
-          {index < videoClips.length - 1 && (
-            <TransitionPage nextClip={videoClips[index + 1]} nextIndex={index + 1} />
+          {index < clips.length - 1 && (
+            <TransitionPage nextClip={clips[index + 1]} nextIndex={index + 1} />
           )}
         </div>
       ))}

@@ -26,7 +26,8 @@
   --glass-border:  rgba(255,255,255,0.1);
 }
 
-* { margin: 0; padding: 0; box-sizing: border-box; }
+/* Tailwind v4 preflight has equivalent reset inside @layer base;
+   an UNLAYERED * reset would outrank @layer utilities and zero out all spacing classes. */
 
 html {
   /* 原生吸附關閉：慢速+變速的吸附由 page.tsx 的 JS 補間實作，

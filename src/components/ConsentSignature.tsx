@@ -67,9 +67,17 @@ export default function ConsentSignature() {
         </p>
       </motion.div>
 
-      {/* Google Form iframe（高度依寬度自適應；提交後自動收合，避免留下大片空白） */}
+      {/* Google Form iframe（高度依寬度自適應）。
+          pages={2}：同意書是兩頁式表單，翻頁會重新載入文件，
+          無法與「送出」區分，所以不做自動收合，只提供手動收合鈕，
+          避免參與者按「繼續」翻到第二頁時表單突然變短。 */}
       <div ref={wrapRef} className="w-full max-w-3xl">
-        <GoogleFormEmbed src={src} height={formHeight} title="Consent to Participate in Research" />
+        <GoogleFormEmbed
+          src={src}
+          height={formHeight}
+          title="Consent to Participate in Research"
+          pages={2}
+        />
       </div>
 
       {/* 表單下方的小提示（不擋 StepFooter） */}

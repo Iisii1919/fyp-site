@@ -4,21 +4,25 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
-import { useAutoAdvance } from '@/lib/useAutoAdvance';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
+import { postTest2HeightForWidth } from '@/lib/formHeights';
+import { useFormHeight } from '@/lib/useFormHeight';
 
 interface PostTest2Props {
-  /** 送出後自動前往下一步（這是後測頁的最後一份問卷）。 */
-  onComplete?: () => void;
+  /** 這份問卷是否已提交（由 PostTest 追蹤，用來顯示進度）。 */
+  submitted?: boolean;
+  /** 偵測到送出時通知 PostTest。是否跳頁由 PostTest 依「兩份都完成」判斷。 */
+  onSubmitted?: () => void;
 }
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSfZEBVOQxauanG6meZdXM8-7_6iGO6wck8WeR_uDAazH7_QzA/viewform?embedded=true';
 
-export default function PostTest2({ onComplete }: PostTest2Props) {
+export default function PostTest2({ submitted = false, onSubmitted }: PostTest2Props) {
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
-  const handleSubmitted = useAutoAdvance(onComplete);
+  // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
+  const [wrapRef, formHeight] = useFormHeight(postTest2HeightForWidth, postTest2HeightForWidth(768));
 
   useEffect(() => {
     setSrc(buildPrefill(FORM_SRC, 'postTest2', participant));
@@ -50,19 +54,28 @@ export default function PostTest2({ onComplete }: PostTest2Props) {
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
           請完成第二份後測問卷，這是最後一份問卷。
         </p>
+
+        {/* 已提交標記：讓參與者一眼看出這份完成了沒 */}
+        {submitted && (
+          <div className="inline-flex items-center gap-2 mt-4 px-4 py-1.5 rounded-full border border-[rgba(198,168,248,0.45)] bg-[rgba(198,168,248,0.12)]">
+            <span className="text-[#d4bfff] text-xs">✓ 已提交 Submitted</span>
+          </div>
+        )}
       </motion.div>
 
-      {/* Google Form iframe（送出後自動收合，並自動完成研究） */}
-      <GoogleFormEmbed
-        src={src}
-        height={3914}
-        title="Post-Test Questionnaire 2"
-        onSubmitted={handleSubmitted}
-      />
+      {/* Google Form iframe（高度依寬度自適應；提交後自動收合） */}
+      <div ref={wrapRef} className="w-full max-w-3xl">
+        <GoogleFormEmbed
+          src={src}
+          height={formHeight}
+          title="Post-Test Questionnaire 2"
+          onSubmitted={onSubmitted}
+        />
+      </div>
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
-        提交問卷後會自動完成研究。
+        兩份後測問卷都提交後，才會自動完成研究。
       </p>
     </div>
   );

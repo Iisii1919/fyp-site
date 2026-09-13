@@ -1,11 +1,13 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
+import { viewingFeedbackHeightForWidth } from '@/lib/formHeights';
+import { useFormHeight } from '@/lib/useFormHeight';
 
 interface PostViewFeedbackProps {
   /** 送出後自動前往下一步（這一頁只有這份問卷）。 */
@@ -15,42 +17,16 @@ interface PostViewFeedbackProps {
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLScO2-onh0sjZlL6LsvLmhnqztt5FQf7XXtZBFqiS8j5ZpVo4Q/viewform?embedded=true';
 
-// 讓整份表單一次顯示完、不產生 iframe 內頁捲軸。
-// 實測表單初始渲染高度（含標題與送出鈕）：
-//   寬 768px → 1174px ／ 640px → 1208px ／ 480px → 1318px ／ 390px → 1438px
-// 以下高度 = 實測值 + 約 145px 緩衝（長文輸入框會隨作答內容長高）。
-// 緩衝用盡時仍會出現捲軸（寧可捲、也不要裁掉送出鈕），故不使用 scrolling="no"。
-const heightForWidth = (w: number) => {
-  if (w >= 720) return 1320;
-  if (w >= 560) return 1400;
-  if (w >= 440) return 1480;
-  return 1580;
-};
-
 export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [formHeight, setFormHeight] = useState(1320);
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
+  // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
+  const [wrapRef, formHeight] = useFormHeight(viewingFeedbackHeightForWidth, viewingFeedbackHeightForWidth(768));
   const handleSubmitted = useAutoAdvance(onComplete);
 
   useEffect(() => {
     setSrc(buildPrefill(FORM_SRC, 'viewingFeedback', participant));
   }, [participant]);
-
-  // 依容器實際寬度決定 iframe 高度（視窗縮放時自動更新）
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const update = () => {
-      const next = heightForWidth(el.clientWidth);
-      setFormHeight((prev) => (prev === next ? prev : next));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center px-4 pt-12 pb-24 relative" style={{ background: 'radial-gradient(ellipse at 50% 0%, #545454 0%, #3d3d3d 50%, #3d3d3d 100%)' }}>

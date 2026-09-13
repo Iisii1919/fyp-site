@@ -1,21 +1,50 @@
 'use client';
 
+import { useCallback, useEffect, useRef, useState } from 'react';
 import PreTest1 from './PreTest1';
 import PreTest2 from './PreTest2';
 import StepFooter from './StepFooter';
+import QuestionnaireProgress from './QuestionnaireProgress';
+import { useAutoAdvance } from '@/lib/useAutoAdvance';
+
+const LABELS = ['前測問卷（一）', '前測問卷（二）'];
 
 interface PreTestProps {
-  /** 第二份（最後一份）問卷送出後自動前往下一步。 */
+  /** 兩份前測問卷「都」送出後，自動前往下一步。 */
   onNext: () => void;
 }
 
 // 將兩份前測問卷疊在同一頁（PreTest1 → 分隔線 → PreTest2）。
-// 第二份送出後會自動跳到下一步，所以這裡不再放前進箭頭（StepFooter 只留裝飾星點）。
-// 注意：個別子組件仍各自撐高 min-h-screen，外層用 relative 讓 StepFooter 絕對定位。
+//
+// ⚠️ 一定要「兩份都提交」才前進。
+// 之前的作法是只監聽第二份的送出就跳頁，結果參與者跳過第一份也會被帶走，
+// 第一份的資料就缺了，而且他們自己不會發現。
+// 所以改成這裡統一追蹤兩份的狀態，兩份都完成才觸發自動跳轉。
 export default function PreTest({ onNext }: PreTestProps) {
+  const [done, setDone] = useState([false, false]);
+  const firstRef = useRef<HTMLDivElement>(null);
+  const secondRef = useRef<HTMLDivElement>(null);
+  const trigger = useAutoAdvance(onNext);
+
+  const markDone = useCallback((index: number) => {
+    setDone((prev) => (prev[index] ? prev : prev.map((d, i) => (i === index ? true : d))));
+  }, []);
+
+  // 兩份都提交才排程跳轉（useAutoAdvance 內部保證只跳一次）
+  useEffect(() => {
+    if (done.every(Boolean)) trigger();
+  }, [done, trigger]);
+
+  const jumpTo = useCallback((index: number) => {
+    const el = index === 0 ? firstRef.current : secondRef.current;
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, []);
+
   return (
     <div className="w-full relative pb-36">
-      <PreTest1 />
+      <div ref={firstRef}>
+        <PreTest1 submitted={done[0]} onSubmitted={() => markDone(0)} />
+      </div>
 
       {/* 兩份問卷之間的小分隔（金色裝飾） */}
       <div className="w-full py-12 flex items-center justify-center" aria-hidden>
@@ -26,8 +55,14 @@ export default function PreTest({ onNext }: PreTestProps) {
         </div>
       </div>
 
-      {/* 第二份是最後一份問卷 → 送出後自動前往下一步 */}
-      <PreTest2 onComplete={onNext} />
+      <div ref={secondRef}>
+        <PreTest2 submitted={done[1]} onSubmitted={() => markDone(1)} />
+      </div>
+
+      {/* 進度提示：讓參與者看得出還剩哪一份沒做 */}
+      <div className="w-full px-4 py-10">
+        <QuestionnaireProgress labels={LABELS} done={done} onJumpTo={jumpTo} />
+      </div>
 
       <StepFooter />
     </div>

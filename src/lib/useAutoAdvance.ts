@@ -23,7 +23,12 @@ export function useAutoAdvance(onNext?: () => void, delayMs = 1600) {
 
   useEffect(
     () => () => {
-      if (timer.current !== null) window.clearTimeout(timer.current);
+      if (timer.current !== null) {
+        window.clearTimeout(timer.current);
+        // 一定要歸零：只 clearTimeout 而留著舊 id 的話，之後再呼叫 trigger()
+        // 會被「timer.current !== null」這個守衛擋掉，變成永遠不會跳頁。
+        timer.current = null;
+      }
     },
     [],
   );

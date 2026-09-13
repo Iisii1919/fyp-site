@@ -5,17 +5,24 @@ import { motion } from 'framer-motion';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
+import { preTest1HeightForWidth } from '@/lib/formHeights';
+import { useFormHeight } from '@/lib/useFormHeight';
 
 interface PreTest1Props {
-  onComplete?: () => void;
+  /** 這份問卷是否已提交（由 PreTest 追蹤，用來顯示進度）。 */
+  submitted?: boolean;
+  /** 偵測到送出時通知 PreTest。 */
+  onSubmitted?: () => void;
 }
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLScVhr-y__tyvPHGai_h0jRF9Db6pPLZdqTE-O6GeC5qd9oj6A/viewform?embedded=true';
 
-export default function PreTest1({ onComplete: _onComplete }: PreTest1Props) {
+export default function PreTest1({ submitted = false, onSubmitted }: PreTest1Props) {
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
+  // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
+  const [wrapRef, formHeight] = useFormHeight(preTest1HeightForWidth, preTest1HeightForWidth(768));
 
   useEffect(() => {
     setSrc(buildPrefill(FORM_SRC, 'preTest1', participant));
@@ -39,14 +46,28 @@ export default function PreTest1({ onComplete: _onComplete }: PreTest1Props) {
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
           觀看影片前，請先完成第一份前測問卷。
         </p>
+
+        {/* 已提交標記：讓參與者一眼看出這份完成了沒 */}
+        {submitted && (
+          <div className="inline-flex items-center gap-2 mt-4 px-4 py-1.5 rounded-full border border-[rgba(198,168,248,0.45)] bg-[rgba(198,168,248,0.12)]">
+            <span className="text-[#d4bfff] text-xs">✓ 已提交 Submitted</span>
+          </div>
+        )}
       </motion.div>
 
-      {/* Google Form iframe（提交後自動收合，避免下方留下大片空白） */}
-      <GoogleFormEmbed src={src} height={2568} title="Pre-Test Questionnaire 1" />
+      {/* Google Form iframe（高度依寬度自適應；提交後自動收合） */}
+      <div ref={wrapRef} className="w-full max-w-3xl">
+        <GoogleFormEmbed
+          src={src}
+          height={formHeight}
+          title="Pre-Test Questionnaire 1"
+          onSubmitted={onSubmitted}
+        />
+      </div>
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
-        提交問卷後，請繼續填寫下一份問卷。
+        提交問卷後，請繼續填寫第二份問卷。
       </p>
     </div>
   );

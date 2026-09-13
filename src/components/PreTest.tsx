@@ -5,14 +5,14 @@ import PreTest2 from './PreTest2';
 import StepFooter from './StepFooter';
 
 interface PreTestProps {
-  onBack: () => void;
+  /** 第二份（最後一份）問卷送出後自動前往下一步。 */
   onNext: () => void;
 }
 
-// 將兩份前測問卷疊在同一頁（PreTest1 → 分隔線 → PreTest2），
-// 並在頁面最底下加 StepFooter（Back / Next chevron）。
+// 將兩份前測問卷疊在同一頁（PreTest1 → 分隔線 → PreTest2）。
+// 第二份送出後會自動跳到下一步，所以這裡不再放前進箭頭（StepFooter 只留裝飾星點）。
 // 注意：個別子組件仍各自撐高 min-h-screen，外層用 relative 讓 StepFooter 絕對定位。
-export default function PreTest({ onBack, onNext }: PreTestProps) {
+export default function PreTest({ onNext }: PreTestProps) {
   return (
     <div className="w-full relative pb-36">
       <PreTest1 />
@@ -29,7 +29,7 @@ export default function PreTest({ onBack, onNext }: PreTestProps) {
       {/* 第二份是最後一份問卷 → 送出後自動前往下一步 */}
       <PreTest2 onComplete={onNext} />
 
-      <StepFooter onBack={onBack} onNext={onNext} canBack canNext />
+      <StepFooter />
     </div>
   );
 }

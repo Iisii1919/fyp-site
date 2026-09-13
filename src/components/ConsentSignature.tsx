@@ -1,38 +1,16 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
+import { consentHeightForWidth } from '@/lib/formHeights';
+import { useFormHeight } from '@/lib/useFormHeight';
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSdsPN6zMjcZmsLTYfugdrTYpKOVxzYAZZsAo6UKDGE-LFPK3A/viewform?embedded=true';
-
-// 讓整份同意書一次顯示完、不產生 iframe 內頁捲軸。
-//
-// 2026-09-13 重測：表單已從「兩頁」合併成「單頁」（同意書正文＋勾選＋簽名＋日期＋確認都在同一頁），
-// 內容變高很多，原本的 1505px 已經不夠 → 出現內頁捲軸。
-// 以 CDP 實際量測 iframe 內文件的 scrollHeight（iframe 設 300px 高讓內容溢出才量得到真實高度）：
-//   768px → 2399 ／ 640px → 2527 ／ 560px → 2571 ／ 480px → 2775 ／ 440px → 2859
-//   390px → 3010 ／ 360px → 3158 ／ 340px → 3310 ／ 320px → 3434
-//   300px → 3534 ／ 288px → 3646 ／ 276px → 3834
-// 每個級距取「該級距最小寬度」的量測值 + 約 30px 緩衝（寬度越小內容越高）。
-const heightForWidth = (w: number) => {
-  if (w >= 720) return 2430; // 量測 2399（容器 max-w-3xl，實際不會超過 768）
-  if (w >= 640) return 2560; // 量測 2527
-  if (w >= 560) return 2600; // 量測 2571
-  if (w >= 480) return 2810; // 量測 2775
-  if (w >= 440) return 2890; // 量測 2859
-  if (w >= 390) return 3040; // 量測 3010
-  if (w >= 360) return 3190; // 量測 3158
-  if (w >= 340) return 3340; // 量測 3310
-  if (w >= 320) return 3470; // 量測 3434
-  if (w >= 300) return 3570; // 量測 3534
-  if (w >= 280) return 3690; // 量測 3646
-  return 3880; // 量測 3834（276px）
-};
 
 // ⚠️ 同意書表單目前有幾頁。
 // 2026-09-13：已把 Google Form 的「簽名區段」並回第一頁，現在是「單頁」→ 設 1，
@@ -46,8 +24,8 @@ interface ConsentSignatureProps {
 }
 
 export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
-  const wrapRef = useRef<HTMLDivElement>(null);
-  const [formHeight, setFormHeight] = useState(2430);
+  // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
+  const [wrapRef, formHeight] = useFormHeight(consentHeightForWidth, consentHeightForWidth(768));
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
 
@@ -58,20 +36,6 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
   useEffect(() => {
     setSrc(buildPrefill(FORM_SRC, 'consentSignature', participant));
   }, [participant]);
-
-  // 依容器實際寬度決定 iframe 高度（視窗縮放時自動更新）
-  useEffect(() => {
-    const el = wrapRef.current;
-    if (!el) return;
-    const update = () => {
-      const next = heightForWidth(el.clientWidth);
-      setFormHeight((prev) => (prev === next ? prev : next));
-    };
-    update();
-    const ro = new ResizeObserver(update);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, []);
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center px-4 pt-12 pb-24 relative" style={{ background: 'radial-gradient(ellipse at 50% 0%, #545454 0%, #3d3d3d 50%, #3d3d3d 100%)' }}>

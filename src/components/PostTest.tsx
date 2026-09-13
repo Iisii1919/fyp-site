@@ -5,13 +5,13 @@ import PostTest2 from './PostTest2';
 import StepFooter from './StepFooter';
 
 interface PostTestProps {
-  onBack: () => void;
+  /** 第二份（最後一份）問卷送出後自動完成研究。 */
   onNext: () => void;
 }
 
-// 將兩份後測問卷疊在同一頁（PostTest1 → 分隔線 → PostTest2），
-// 並在頁面最底下加 StepFooter（Back / Next chevron）。
-export default function PostTest({ onBack, onNext }: PostTestProps) {
+// 將兩份後測問卷疊在同一頁（PostTest1 → 分隔線 → PostTest2）。
+// 第二份送出後會自動跳到完成頁，所以這裡不再放前進箭頭（StepFooter 只留裝飾星點）。
+export default function PostTest({ onNext }: PostTestProps) {
   return (
     <div className="w-full relative pb-36">
       <PostTest1 />
@@ -28,7 +28,7 @@ export default function PostTest({ onBack, onNext }: PostTestProps) {
       {/* 第二份是最後一份問卷 → 送出後自動完成研究 */}
       <PostTest2 onComplete={onNext} />
 
-      <StepFooter onBack={onBack} onNext={onNext} canBack canNext />
+      <StepFooter />
     </div>
   );
 }

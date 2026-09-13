@@ -3,12 +3,21 @@
 import { motion } from 'framer-motion';
 
 interface StepFooterProps {
-  onBack?: () => void;
   onNext?: () => void;
-  canBack?: boolean;
+  /**
+   * 是否顯示中央的 Next chevron。
+   *
+   * 只有「這一頁沒有其他前進方式」才需要開：
+   *   0 Hero（沒有按鈕）、5 VideoViewer（看完所有片段會自動跳，這裡留一個備援）、
+   *   7 純文字分隔頁（沒有任何按鈕）。
+   * 其他頁面都有自動跳轉或自己的按鈕，所以不顯示。
+   *
+   * ⚠️ 這裡刻意「沒有」Back 按鈕。
+   * 原因：本網站是用 step state 條件渲染，按 Back 會把上一頁的元件重新掛載，
+   * 該頁的 iframe 會整份重新載入 → 參與者已經填到一半的答案會全部消失。
+   * 再加上多數頁面已改成自動跳轉，往回走之後沒有明顯的前進路徑，容易卡住。
+   */
   canNext?: boolean;
-  /** 隱藏中央的 Next chevron（當該頁已有自己的前進按鈕時用） */
-  hideNext?: boolean;
 }
 
 // 預先計算的星點位置（避免 SSR/CSR 隨機數不一致）
@@ -29,11 +38,13 @@ const STARS: { x: number; y: number; size: number; delay: number; dur: number }[
   { x: 36, y: 55, size: 0.8, delay: 0.9,  dur: 4.5 },
 ];
 
-export default function StepFooter({ onBack, onNext, canBack = false, canNext = false, hideNext = false }: StepFooterProps) {
+export default function StepFooter({ onNext, canNext = false }: StepFooterProps) {
+  const showNext = canNext && !!onNext;
+
   return (
     // 絕對定位在父層（section）底部 = 每頁自己的頁腳
     <div className="absolute bottom-0 left-0 right-0 z-40 pointer-events-none" aria-label="Page navigation">
-      {/* 背景：星點 + 底部黑色漸層（讓 chevron 在淺色背景也可讀） */}
+      {/* 背景：星點 +（有 chevron 時）底部黑色漸層讓 chevron 在淺色背景也可讀 */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         {STARS.map((star, i) => (
           <motion.span
@@ -44,35 +55,22 @@ export default function StepFooter({ onBack, onNext, canBack = false, canNext = 
             transition={{ duration: star.dur, repeat: Infinity, delay: star.delay, ease: 'easeInOut' }}
           />
         ))}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-28"
-          style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)' }}
-        />
+        {showNext && (
+          <div
+            className="absolute bottom-0 left-0 right-0 h-28"
+            style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.65), transparent)' }}
+          />
+        )}
       </div>
 
-      {/* 按鈕列：左 Back / 中 Next chevron / 右 留白維持 chevron 置中 */}
-      <div className="relative z-10 pointer-events-auto flex items-center justify-center min-h-[112px] py-6 px-6 md:px-12">
-        {/* 左：返回（可選） */}
-        {canBack && onBack && (
-          <motion.button
-            onClick={onBack}
-            className="group absolute left-6 md:left-12 flex items-center gap-2 text-[#9a9a9a] hover:text-[#d4bfff] focus:outline-none focus-visible:text-[#d4bfff] transition-colors"
-            whileHover={{ x: -4 }}
-            whileTap={{ scale: 0.92 }}
-            aria-label="Previous step"
-          >
-            <svg className="w-7 h-7" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 18l-6-6 6-6" />
-            </svg>
-            <span className="text-xs tracking-[0.2em] uppercase hidden sm:inline">Back</span>
-          </motion.button>
-        )}
-
-        {/* 中：Next chevron（與 Back 相同的大小與交互效果；hideNext 時不顯示） */}
-        {canNext && onNext && !hideNext && (
+      {/* 保留這個高度的空白列，讓上面的星點有高度可以定位；沒有 chevron 時就是純留白。
+          這層是 pointer-events-none，否則這條 112px 高的區域會擋住底下內容的點擊；
+          只有按鈕本身開 pointer-events-auto。 */}
+      <div className="relative z-10 min-h-[112px] py-6 px-6 md:px-12 flex items-center justify-center">
+        {showNext && (
           <motion.button
             onClick={onNext}
-            className="group relative flex items-center gap-2 text-[#9a9a9a] hover:text-[#d4bfff] focus:outline-none focus-visible:text-[#d4bfff] transition-colors"
+            className="pointer-events-auto group relative flex items-center gap-2 text-[#9a9a9a] hover:text-[#d4bfff] focus:outline-none focus-visible:text-[#d4bfff] transition-colors"
             whileHover={{ x: 4 }}
             whileTap={{ scale: 0.92 }}
             aria-label="Next step"
@@ -90,9 +88,6 @@ export default function StepFooter({ onBack, onNext, canBack = false, canNext = 
             </svg>
           </motion.button>
         )}
-
-        {/* 右：留白（讓 chevron 視覺置中） */}
-        <div className="absolute right-6 md:right-12 w-20" aria-hidden />
       </div>
     </div>
   );

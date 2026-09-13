@@ -33,7 +33,6 @@ export default function Home() {
   const [videoProgress, setVideoProgress] = useState(0);
 
   const goNext = useCallback(() => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)), []);
-  const goBack = useCallback(() => setStep((s) => Math.max(s - 1, 0)), []);
 
   // 每次跳轉到新一步，先把視窗捲回最上方，讓該步從頂部開始顯示
   useEffect(() => {
@@ -153,27 +152,27 @@ export default function Home() {
         {step === 1 && (
           <section className="relative w-full no-snap">
             <InformedConsent onAccepted={goNext} />
-            <StepFooter onBack={goBack} onNext={goNext} canBack canNext hideNext />
+            <StepFooter />
           </section>
         )}
 
         {step === 2 && (
           <section className="relative w-full no-snap">
             <ConsentSignature onNext={goNext} />
-            <StepFooter onBack={goBack} onNext={goNext} canBack canNext />
+            <StepFooter />
           </section>
         )}
 
         {step === 3 && (
           <section className="relative w-full no-snap">
-            <PreTest onBack={goBack} onNext={goNext} />
+            <PreTest onNext={goNext} />
           </section>
         )}
 
         {step === 4 && (
           <section className="relative w-full no-snap">
             <GroupGate onContinue={goNext} />
-            <StepFooter onBack={goBack} onNext={goNext} canBack canNext />
+            <StepFooter />
           </section>
         )}
 
@@ -184,14 +183,15 @@ export default function Home() {
               progress={videoProgress}
               onAllComplete={handleAllVideosComplete}
             />
-            <StepFooter onBack={goBack} onNext={goNext} canBack canNext />
+            {/* 影片頁看完所有片段會自動跳，但萬一有片段載不出來就卡住 → 保留 chevron 當備援 */}
+            <StepFooter onNext={goNext} canNext />
           </section>
         )}
 
         {step === 6 && (
           <section className="relative w-full no-snap">
             <PostViewFeedback onComplete={goNext} />
-            <StepFooter onBack={goBack} onNext={goNext} canBack canNext />
+            <StepFooter />
           </section>
         )}
 
@@ -234,20 +234,21 @@ export default function Home() {
               <p className="text-[#9a9a9a] text-sm mt-6">接下來請完成後測問卷</p>
               <p className="text-[#8a8a8a] text-xs mt-1">Next, please complete the post-test questionnaire</p>
             </motion.div>
-            <StepFooter onBack={goBack} onNext={goNext} canBack canNext />
+            {/* 純文字分隔頁，沒有任何按鈕 → 需要 chevron */}
+            <StepFooter onNext={goNext} canNext />
           </section>
         )}
 
         {step === 8 && (
           <section className="relative w-full no-snap">
-            <PostTest onBack={goBack} onNext={goNext} />
+            <PostTest onNext={goNext} />
           </section>
         )}
 
         {step === 9 && (
           <section className="relative w-full no-snap">
             <ThankYou participantName="" />
-            <StepFooter onBack={goBack} canBack />
+            <StepFooter />
           </section>
         )}
       </main>

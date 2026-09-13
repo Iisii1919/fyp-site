@@ -133,7 +133,7 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1, duration: 0.5 }}
-          className="flex justify-center"
+          className="flex flex-col items-center"
         >
           <motion.button
             whileHover={isChecked ? { scale: 1.03 } : {}}
@@ -146,6 +146,15 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
             <span className="text-xs opacity-70 font-normal">我同意並繼續</span>
 
           </motion.button>
+
+          {/* 按鈕在未勾選時是 disabled（透明度 0.4）。只把按鈕變淡、不說原因的話，
+              參與者會以為「按了沒反應」而卡住，所以在這裡說明為什麼還不能按。 */}
+          {!isChecked && (
+            <p className="text-[#9a9a9a] text-xs mt-3 text-center">
+              請先勾選上方同意欄位
+              <span className="block text-[#8a8a8a] mt-0.5">Please tick the consent box above first</span>
+            </p>
+          )}
         </motion.div>
       </motion.div>
     </div>

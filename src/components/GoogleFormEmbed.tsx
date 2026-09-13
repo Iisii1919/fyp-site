@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 
 interface GoogleFormEmbedProps {
@@ -35,6 +35,36 @@ interface GoogleFormEmbedProps {
 // 收合後仍提供「展開表單」按鈕，即使判斷有誤使用者也能自行復原。
 const SUBMITTED_HEIGHT = 460;
 
+// ⚠️ 載入失敗的救援機制（2026-09-13 新增）
+//
+// 為什麼需要：問卷頁（step 2 / 3 / 6 / 8）**刻意沒有任何「下一頁」按鈕**，
+// 唯一的往前路徑就是「表單送出後自動跳轉」。這在正常情況下沒問題，
+// 但如果 iframe 載入失敗（斷網、場地網路擋掉 docs.google.com、Google 端異常），
+// 不會有送出、也就不會自動跳轉 → 而頁面上又沒有按鈕 →
+// **參與者只能盯著一片空白，完全沒有前進的路**，而且畫面上沒有任何錯誤訊息。
+//
+// 怎麼偵測（實測結論，別改成憑感覺的寫法）：
+//   ❌ 不能只用「N 秒內沒有 load 事件」判斷 —— 以 CDP 封鎖 docs.google.com 實測，
+//      Chrome 會照樣提交錯誤頁並**在約 3.5 秒時正常觸發 load**。
+//      健康的表單和錯誤頁在所有可觀察面向完全一樣：都會 load、
+//      contentDocument 都是 null、contentWindow.length 都是 0。DOM 沒有任何訊號可分辨。
+//   ❌ `navigator.onLine` 沒用 —— 封鎖該網域時它仍然是 true（只反映網卡狀態）。
+//   ✅ 唯一可靠的是**獨立探測主機是否連得到**：對表單網址送一個 no-cors 的 HEAD 請求。
+//      同源政策不適用於 no-cors，所以不需要 CORS 標頭；
+//      連得到 → resolve（不透明回應），連不到 → reject。
+//      實測：正常 426ms resolve；封鎖時 1ms reject。乾淨可辨。
+//
+// 另外保留一個「N 秒內沒有 load」的計時器，用來涵蓋「請求卡住、連錯誤頁都沒有」的情況。
+//
+// 救援面板只在偵測到失敗時出現，正常流程下參與者看不到，
+// 因此不會成為「跳過問卷」的漏洞。面板另有一個不明顯的關閉鈕，
+// 萬一探測誤判（例如瀏覽器外掛擋掉了探測請求）參與者仍能回到正常畫面。
+const FALLBACK_HEIGHT = 320;
+/** 沒有 load 事件就當成「可能載不出來」。刻意寬鬆：慢速網路不該被誤判。 */
+const LOAD_TIMEOUT_MS = 15000;
+/** 探測請求自己的上限。逾時只代表「不知道」，不能當成連不上。 */
+const PROBE_TIMEOUT_MS = 10000;
+
 export default function GoogleFormEmbed({
   src,
   height,
@@ -48,12 +78,93 @@ export default function GoogleFormEmbed({
   // 表單會在剛載入時就被收合。所以只有「src 沒變卻又 reload」才視為送出。
   const lastLoadedSrc = useRef<string | null>(null);
   const fired = useRef(false);
+
   const [collapsed, setCollapsed] = useState(false);
+  const [loadFired, setLoadFired] = useState(false);
+  /** null = 還在探測 / 無法判定；false = 確定連不到表單主機 */
+  const [reachable, setReachable] = useState<boolean | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  // 參與者自行宣告「已在新視窗提交」。設為 true 後救援面板收起、卡片收合成確認高度。
+  const [manualDone, setManualDone] = useState(false);
+  // 重試用 key 讓 iframe 整個重新掛載（而不是改 src）。
+  const [reloadKey, setReloadKey] = useState(0);
 
   // 只有單頁表單可以自動判斷送出；多頁表單的翻頁會造成誤判。
   const autoCollapse = pages <= 1;
   // 多頁表單永遠顯示手動收合鈕；單頁表單只在（自動）收合後顯示，用來復原。
   const showToggle = collapsed || !autoCollapse;
+
+  // 每次（重新）掛載都重新探測一次。
+  useEffect(() => {
+    let cancelled = false;
+    setLoadFired(false);
+    setReachable(null);
+    setTimedOut(false);
+    setDismissed(false);
+
+    const ctrl = new AbortController();
+    const hardStop = window.setTimeout(() => ctrl.abort(), PROBE_TIMEOUT_MS);
+    fetch(src, { mode: 'no-cors', method: 'HEAD', cache: 'no-store', signal: ctrl.signal })
+      .then(() => {
+        if (!cancelled) setReachable(true);
+      })
+      .catch((err: unknown) => {
+        // 只是探測自己逾時 → 不能斷定連不上，交給下方的 load 計時器判斷。
+        if ((err as Error)?.name === 'AbortError') return;
+        if (!cancelled) setReachable(false);
+      })
+      .finally(() => window.clearTimeout(hardStop));
+
+    const noLoad = window.setTimeout(() => {
+      if (!cancelled) setTimedOut(true);
+    }, LOAD_TIMEOUT_MS);
+
+    return () => {
+      cancelled = true;
+      ctrl.abort();
+      window.clearTimeout(hardStop);
+      window.clearTimeout(noLoad);
+    };
+  }, [src, reloadKey]);
+
+  const handleLoad = useCallback(() => {
+    setLoadFired(true);
+
+    const prev = lastLoadedSrc.current;
+    lastLoadedSrc.current = src;
+    if (!autoCollapse) return;
+    // 首次載入、或 src 變更（帶入 prefill）造成的重新載入 → 不算送出
+    if (prev === null || prev !== src) return;
+    setCollapsed(true);
+    if (!fired.current) {
+      fired.current = true;
+      onSubmitted?.();
+    }
+  }, [autoCollapse, onSubmitted, src]);
+
+  const retry = useCallback(() => {
+    // ⚠️ 一定要把 lastLoadedSrc 歸零。
+    // 重試用的是同一個 src，若留著舊值，這次重新載入會被判定成
+    // 「同 src 又 load = 已送出」→ 參與者還沒填就自動跳頁，直接損失整份問卷。
+    lastLoadedSrc.current = null;
+    setReloadKey((k) => k + 1);
+  }, []);
+
+  // 參與者在另一個視窗填完後自己按「繼續」。走的是和偵測到送出完全相同的路徑。
+  const markSubmittedManually = useCallback(() => {
+    setManualDone(true);
+    setCollapsed(true);
+    if (!fired.current) {
+      fired.current = true;
+      onSubmitted?.();
+    }
+  }, [onSubmitted]);
+
+  // 「連不到主機」單獨就足以判定失敗（錯誤頁也會觸發 load，所以不能反過來要求沒有 load）；
+  // 「一直沒有 load」則是涵蓋請求整個卡住的情況。
+  const failed = reachable === false || (timedOut && !loadFired);
+  const showFallback = failed && !dismissed && !manualDone && !collapsed;
 
   return (
     <>
@@ -62,9 +173,10 @@ export default function GoogleFormEmbed({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         transition={{ delay: 0.2 }}
-        className="w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl border border-[rgba(198,168,248,0.18)]"
+        className="relative w-full max-w-3xl bg-white rounded-2xl overflow-hidden shadow-2xl border border-[rgba(198,168,248,0.18)]"
       >
         <iframe
+          key={reloadKey}
           src={src}
           width="100%"
           frameBorder="0"
@@ -73,24 +185,72 @@ export default function GoogleFormEmbed({
           title={title}
           style={{
             display: 'block',
-            height: collapsed ? SUBMITTED_HEIGHT : height,
+            height: collapsed ? SUBMITTED_HEIGHT : showFallback ? FALLBACK_HEIGHT : height,
             transition: 'height 600ms cubic-bezier(0.22, 1, 0.36, 1)',
           }}
-          onLoad={() => {
-            const prev = lastLoadedSrc.current;
-            lastLoadedSrc.current = src;
-            if (!autoCollapse) return;
-            // 首次載入、或 src 變更（帶入 prefill）造成的重新載入 → 不算送出
-            if (prev === null || prev !== src) return;
-            setCollapsed(true);
-            if (!fired.current) {
-              fired.current = true;
-              onSubmitted?.();
-            }
-          }}
+          onLoad={handleLoad}
         >
           載入中… Loading…
         </iframe>
+
+        {showFallback && (
+          <div
+            role="alert"
+            className="absolute inset-0 z-10 flex flex-col items-center justify-center text-center px-6 py-6 gap-3 bg-white"
+          >
+            <button
+              type="button"
+              onClick={() => setDismissed(true)}
+              aria-label="關閉提示"
+              className="absolute top-2 right-3 text-[#b5b5b5] hover:text-[#7a7a7a] text-lg leading-none transition-colors"
+            >
+              ×
+            </button>
+
+            <svg className="w-8 h-8" viewBox="0 0 24 24" fill="none" stroke="#c98a3c" strokeWidth="1.8" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.3 3.9 2.4 17.5A1.9 1.9 0 0 0 4 20.4h16a1.9 1.9 0 0 0 1.6-2.9L13.7 3.9a1.9 1.9 0 0 0-3.4 0Z" />
+            </svg>
+
+            <p className="text-[#3d3d3d] font-semibold text-base">
+              表單載入失敗
+              <span className="block text-[#6b6b6b] font-normal text-xs mt-0.5">The form could not be loaded</span>
+            </p>
+
+            <p className="text-[#6b6b6b] text-xs leading-relaxed max-w-md">
+              請先嘗試重新載入。若仍然無法載入，可改用新視窗填寫，完成後回來按最下方的「繼續」。
+              <br />
+              Please try reloading. If it still fails, open the form in a new window, submit it, then press “continue” below.
+            </p>
+
+            <div className="flex flex-wrap items-center justify-center gap-3 mt-1">
+              <button
+                type="button"
+                onClick={retry}
+                className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
+                style={{ background: '#d4bfff', color: '#3d3d3d' }}
+              >
+                重新載入表單
+              </button>
+              <a
+                href={src}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-5 py-2.5 rounded-xl text-sm font-medium border transition-colors"
+                style={{ borderColor: 'rgba(198,168,248,0.5)', color: '#5a4a72' }}
+              >
+                在新視窗開啟表單
+              </a>
+            </div>
+
+            <button
+              type="button"
+              onClick={markSubmittedManually}
+              className="text-[#8a8a8a] hover:text-[#5a5a5a] text-xs underline mt-1 transition-colors"
+            >
+              已在新視窗完成提交？按此繼續 →
+            </button>
+          </div>
+        )}
       </motion.div>
 
       {showToggle && (

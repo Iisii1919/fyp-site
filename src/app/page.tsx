@@ -14,6 +14,7 @@ import GroupGate from '@/components/GroupGate';
 import StepFooter from '@/components/StepFooter';
 import DevGroupSwitcher from '@/components/DevGroupSwitcher';
 import { ParticipantProvider } from '@/lib/participant';
+import { useResearcherEscape } from '@/lib/useResearcherEscape';
 
 // 步驟重編（合併兩份前測 + 兩份後測 → 各一頁）：12 → 10
 //  0 Hero
@@ -33,6 +34,10 @@ export default function Home() {
   const [videoProgress, setVideoProgress] = useState(0);
 
   const goNext = useCallback(() => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)), []);
+
+  // 研究員專用逃生鍵（Shift + Alt + N）：所有自動跳轉都失效時，當場把場次救回來。
+  // 詳見 src/lib/useResearcherEscape.ts 的說明 —— 刻意不給參與者任何提示。
+  useResearcherEscape(goNext);
 
   // 每次跳轉到新一步，先把視窗捲回最上方，讓該步從頂部開始顯示
   useEffect(() => {

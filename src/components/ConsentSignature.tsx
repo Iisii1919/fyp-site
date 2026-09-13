@@ -50,10 +50,10 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4">同意書簽署</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
-          Please read the consent form below, tick the boxes, then type your name on the next page to sign.
+          Please read the consent form below, tick the boxes, then type your name to sign and submit.
         </p>
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
-          請細閱以下同意書、勾選確認，然後於下一頁輸入姓名完成簽署。
+          請細閱以下同意書、勾選確認，然後輸入姓名完成簽署並遞交。
         </p>
       </motion.div>
 
@@ -69,23 +69,10 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
         />
       </div>
 
-      {/* 繼續按鈕：放在表單正下方，送出後不用再滑到底部找箭頭。
-          合併成單頁表單後，送出會自動前往，這顆就只是備援。 */}
-      {onNext && (
-        <motion.button
-          whileHover={{ scale: 1.03 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={onNext}
-          className="btn-gold text-base font-semibold inline-flex items-center gap-3 mt-8"
-        >
-          <span>Continue</span>
-          <span className="text-xs opacity-70 font-normal">已完成簽署，繼續</span>
-        </motion.button>
-      )}
-
-      {/* 表單下方的小提示（不擋 StepFooter） */}
+      {/* 表單下方的小提示（不擋 StepFooter）。
+          表單合併成單頁後，簽名也在同一頁，所以不再有「下一頁」可以輸入姓名。 */}
       <p className="text-[#8a8a8a] text-xs mt-4 mb-24 text-center">
-        完成簽署並遞交後，即可繼續填寫前測問卷。
+        遞交後會自動繼續前往前測問卷，不需要再按其他按鈕。
       </p>
     </div>
   );

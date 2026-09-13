@@ -57,7 +57,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
   return (
     <div
       ref={heroRef}
-      className="relative h-screen w-full overflow-hidden flex items-center justify-center"
+      className="relative h-screen w-full overflow-hidden"
       style={{ background: 'radial-gradient(ellipse at 50% 0%, #5e5e5e 0%, #545454 50%, #3d3d3d 100%)' }}
     >
       {/* 環境光暈 */}
@@ -90,15 +90,19 @@ export default function Hero({ onMouseMove }: HeroProps) {
         }}
       />
 
-      {/* 內容 */}
+      {/* 內容區刻意只佔「視窗高度 − 112px」。
+          StepFooter 是 absolute bottom-0 且固定佔 112px，如果把內容置中於整個
+          100vh，視窗高度剛好時最後一行文字會落在頁腳帶裡被「Next · 下一頁」按鈕蓋住
+          （實測 inner height 760–920px 都會發生）。限制高度後按鈕永遠不會壓到內容。 */}
+      <div className="hero-rhythm relative z-10 h-[calc(100vh-112px)] w-full flex items-center justify-center overflow-hidden">
       <motion.div
         variants={containerVariants}
         initial="hidden"
         animate="visible"
-        className="relative z-10 text-center px-6 max-w-5xl mx-auto"
+        className="text-center px-6 max-w-5xl mx-auto"
       >
         {/* 徽章 */}
-        <motion.div variants={itemVariants} className="mb-10">
+        <motion.div variants={itemVariants} className="mb-[var(--hero-gap)]">
           <div className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full border border-[rgba(198,168,248,0.28)] bg-[rgba(198,168,248,0.06)] backdrop-blur-sm">
             <span className="w-1.5 h-1.5 rounded-full bg-[#d4bfff] animate-pulse"></span>
             <span className="text-xs tracking-[0.2em] uppercase text-[#d4bfff] font-medium">
@@ -108,29 +112,29 @@ export default function Hero({ onMouseMove }: HeroProps) {
         </motion.div>
 
         {/* 主標題 */}
-        <motion.div variants={itemVariants} className="mb-6">
-          <h1 className="font-serif font-bold leading-[1.05]">
+        <motion.div variants={itemVariants} className="mb-[calc(var(--hero-gap)*0.5)]">
+          <h1 className="hero-title font-serif font-bold leading-[1.05]">
             <span className="block text-[#FFFFFF]">Sadness Film</span>
             <span className="block text-accent-gradient italic mt-2">on Resilience</span>
           </h1>
         </motion.div>
 
         {/* 副標題 */}
-        <motion.div variants={itemVariants} className="mb-10">
+        <motion.div variants={itemVariants} className="mb-[var(--hero-gap)]">
           <h2 className="text-[#EAECEF] font-serif font-medium tracking-wide">
             傷感電影與心理韌性研究
           </h2>
         </motion.div>
 
         {/* 分隔線 */}
-        <motion.div variants={itemVariants} className="flex items-center justify-center gap-4 mb-10">
+        <motion.div variants={itemVariants} className="flex items-center justify-center gap-4 mb-[var(--hero-gap)]">
           <div className="w-16 h-px bg-gradient-to-r from-transparent to-[#d4bfff]/50"></div>
           <div className="w-1.5 h-1.5 rotate-45 bg-[#d4bfff]/60"></div>
           <div className="w-16 h-px bg-gradient-to-l from-transparent to-[#d4bfff]/50"></div>
         </motion.div>
 
         {/* 描述 */}
-        <motion.div variants={itemVariants} className="max-w-2xl mx-auto mb-14">
+        <motion.div variants={itemVariants} className="max-w-2xl mx-auto mb-[calc(var(--hero-gap)*1.25)]">
           <p className="text-[#c4c4c4] text-lg leading-relaxed">
             This study aims to explore the influence of sadness film on psychological resilience.
           </p>
@@ -140,7 +144,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
         </motion.div>
 
         {/* 三個特色卡片 */}
-        <motion.div variants={itemVariants} className="grid md:grid-cols-3 gap-5 mb-14 max-w-4xl mx-auto">
+        <motion.div variants={itemVariants} className="grid md:grid-cols-3 gap-5 mb-[calc(var(--hero-gap)*1.25)] max-w-4xl mx-auto">
           {[
             { en: 'Watch Videos', zh: '觀看精心準備的影片片段' },
             { en: 'Complete Tasks', zh: '完成問卷與數據收集任務' },
@@ -159,7 +163,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
         </motion.div>
 
         {/* 時間說明（取代原本的「Start Study」按鈕） */}
-        <motion.div variants={itemVariants} className="mt-10 max-w-2xl mx-auto text-center">
+        <motion.div variants={itemVariants} className="mt-[var(--hero-gap)] max-w-2xl mx-auto text-center">
           <div className="inline-flex items-center justify-center gap-2 mb-3">
             <svg className="w-4 h-4 text-[#d4bfff]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="9" strokeWidth={1.5} />
@@ -175,6 +179,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
           </p>
         </motion.div>
       </motion.div>
+      </div>
     </div>
   );
 }

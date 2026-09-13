@@ -68,19 +68,24 @@ export default function StepFooter({ onNext, canNext = false }: StepFooterProps)
           只有按鈕本身開 pointer-events-auto。 */}
       <div className="relative z-10 min-h-[112px] py-6 px-6 md:px-12 flex items-center justify-center">
         {showNext && (
+          // 光有箭頭參與者會看不出那是按鈕（使用者反映怕看不到），所以做成
+          // 有邊框、有底色的膠囊按鈕，並加上「Next · 下一頁」文字。
           <motion.button
             onClick={onNext}
-            className="pointer-events-auto group relative flex items-center gap-2 text-[#9a9a9a] hover:text-[#d4bfff] focus:outline-none focus-visible:text-[#d4bfff] transition-colors"
+            className="pointer-events-auto inline-flex items-center gap-3 px-7 py-3 rounded-full border border-[rgba(198,168,248,0.45)] bg-[rgba(198,168,248,0.12)] text-[#d4bfff] hover:bg-[rgba(198,168,248,0.24)] hover:border-[rgba(198,168,248,0.8)] focus:outline-none focus-visible:border-[rgba(198,168,248,0.9)] transition-colors"
             whileHover={{ x: 4 }}
-            whileTap={{ scale: 0.92 }}
+            whileTap={{ scale: 0.96 }}
             aria-label="Next step"
           >
+            <span className="text-sm md:text-base font-medium tracking-wide whitespace-nowrap">
+              Next · 下一頁
+            </span>
             <svg
-              className="w-7 h-7"
+              className="w-5 h-5 md:w-6 md:h-6 shrink-0"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
-              strokeWidth="1.2"
+              strokeWidth="1.5"
               strokeLinecap="round"
               strokeLinejoin="round"
             >

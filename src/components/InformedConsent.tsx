@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DocxItemView, groupDocxItems } from './DocxView';
 import { infoSheetItems } from './data/infoSheet';
+import { H1_SHEET, H2_PAGE, H3_SHEET_FLAT } from '@/lib/headingSizes';
 
 interface InformedConsentProps {
   onAccepted: () => void;
@@ -72,10 +73,10 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
       >
         {/* 標題區 */}
         <div className="text-center mb-8">
-          <h1 className="font-serif font-bold text-[#FFFFFF] text-2xl md:text-3xl mb-1">
+          <h1 className="font-serif font-bold text-[#FFFFFF] text-2xl md:text-3xl mb-1" style={H1_SHEET}>
             Information Sheet
           </h1>
-          <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-5">
+          <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-5" style={H2_PAGE}>
             研究資料
           </h2>
           <div className="gold-divider max-w-xs mx-auto mb-5"></div>
@@ -109,7 +110,7 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
                 >
                   {group.title && (
                     <div className="mb-2">
-                      <h3 className="font-serif text-[#EAECEF] text-base font-semibold">{group.title}</h3>
+                      <h3 className="font-serif text-[#EAECEF] text-base font-semibold" style={H3_SHEET_FLAT}>{group.title}</h3>
                     </div>
                   )}
 

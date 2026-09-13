@@ -1,3 +1,5 @@
+import { H3_SHEET } from '@/lib/headingSizes';
+
 export type DocxItem =
   | { type: 'p'; text: string; bold: boolean }
   | { type: 'table'; rows: string[][] };
@@ -23,7 +25,7 @@ export function DocxItemView({ item }: { item: DocxItem }) {
   if (item.type === 'p') {
     if (item.bold) {
       return (
-        <h3 className="font-serif font-bold text-[#EAECEF] text-base md:text-lg mt-6 first:mt-0">
+        <h3 className="font-serif font-bold text-[#EAECEF] text-base md:text-lg mt-6 first:mt-0" style={H3_SHEET}>
           {item.text}
         </h3>
       );

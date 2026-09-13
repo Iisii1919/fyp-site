@@ -8,6 +8,7 @@ import { useAutoAdvance } from '@/lib/useAutoAdvance';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 import { viewingFeedbackHeightForWidth } from '@/lib/formHeights';
 import { useFormHeight } from '@/lib/useFormHeight';
+import { H1_PAGE, H2_PAGE } from '@/lib/headingSizes';
 
 interface PostViewFeedbackProps {
   /** 送出後自動前往下一步（這一頁只有這份問卷）。 */
@@ -37,8 +38,8 @@ export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) 
         viewport={{ once: true }}
         className="text-center mb-10"
       >
-        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2">Viewing Feedback</h1>
-        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4">觀後回饋</h2>
+        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Viewing Feedback</h1>
+        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>觀後回饋</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
           Please share your immediate thoughts and feelings after watching the films.

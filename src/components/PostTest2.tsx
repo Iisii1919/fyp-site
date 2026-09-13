@@ -7,6 +7,7 @@ import { buildPrefill } from '@/lib/formPrefill';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 import { postTest2HeightForWidth } from '@/lib/formHeights';
 import { useFormHeight } from '@/lib/useFormHeight';
+import { H1_PAGE, H2_PAGE } from '@/lib/headingSizes';
 
 interface PostTest2Props {
   /** 這份問卷是否已提交（由 PostTest 追蹤，用來顯示進度）。 */
@@ -45,8 +46,8 @@ export default function PostTest2({ submitted = false, onSubmitted }: PostTest2P
         viewport={{ once: true }}
         className="text-center mb-10"
       >
-        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2">Post-Test Questionnaire (2)</h1>
-        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4">後測問卷（二）</h2>
+        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Post-Test Questionnaire (2)</h1>
+        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>後測問卷（二）</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
           Please complete the second post-test questionnaire. This is the final questionnaire.

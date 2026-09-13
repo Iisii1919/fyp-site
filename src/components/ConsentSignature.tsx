@@ -8,6 +8,7 @@ import { buildPrefill } from '@/lib/formPrefill';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
 import { consentHeightForWidth } from '@/lib/formHeights';
 import { useFormHeight } from '@/lib/useFormHeight';
+import { H1_PAGE, H2_PAGE } from '@/lib/headingSizes';
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSdsPN6zMjcZmsLTYfugdrTYpKOVxzYAZZsAo6UKDGE-LFPK3A/viewform?embedded=true';
@@ -46,8 +47,8 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
         viewport={{ once: true }}
         className="text-center mb-8"
       >
-        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2">Consent Form</h1>
-        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4">同意書簽署</h2>
+        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Consent Form</h1>
+        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>同意書簽署</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
           Please read the consent form below, tick the boxes, then type your name to sign and submit.

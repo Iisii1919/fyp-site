@@ -35,11 +35,14 @@ const sadnessClips: Clip[] = [
 // （2026-09-08 提供），請勿修改。中文描述（descZh）與對應英文描述（desc）
 // 於 2026-09-12 依使用者提供的最新截圖再次修訂。
 // 仍可調整的是 src（檔名）與 duration（影片秒數的 fallback）。
+// ⚠️ duration 必須等於檔案實際長度（2026-09-14 用 check-videos.mjs 以真實 Chrome 讀 loadedmetadata 校正過）。
+// 原本的 4 個值（1:25 / 2:00 / 2:30 / 2:00）來自早期規格，與 R2 上的檔案不符，已改成實測值。
+// 它會顯示在每支片段的時長徽章上，也是 metadata 未載入時進度條／seek 的 fallback，所以不能亂填。
 const neutralClips: Clip[] = [
-  { id: 1, title: 'Before Sunset', titleZh: '日落巴黎', desc: 'A man and a woman are reluctant to part, lingering even though they will miss their flight. They talk and laugh, and the itinerary no longer matters.', descZh: '男女對彼此依依不捨，即使趕不上飛機也不捨得離開，他們有說有笑，行程早已不重要。', duration: '1:25', src: 'before-sunset-1.mov' },
-  { id: 2, title: 'Paris, Texas', titleZh: '德州巴黎', desc: 'A child separated from his mother by his parents\' divorce finally meets her again, and they hold each other tightly. The father chooses to step away, leaving the space to mother and son.', descZh: '因父母離異而與母親分離的孩子終於和母親見面，他們緊緊相擁在一起，而父親則是選擇離開，將空間留給母子。', duration: '2:00', src: 'taxa-paris-1.mov' },
-  { id: 3, title: 'The Pursuit of Happyness', titleZh: '尋找快樂的故事', desc: 'A man finally gets the job he has always dreamed of. He hugs his son tightly and sighs that the hardest days are now behind them.', descZh: '男人得到了夢寐以求的工作，他緊緊擁抱兒子，感嘆最辛苦的日子已經過去。', duration: '2:30', src: 'the-pursuit-1.mov' },
-  { id: 4, title: 'About Time', titleZh: '真愛每一天', desc: 'A man learns to live in the present. In everyday life, his wife and daughter already make him deeply happy; he decides to stop worrying about what he might miss, and instead welcome a new day.', descZh: '男人學會了活在當下，日常中他的妻女已經令他感到很幸福，他決定不再擔心錯過，而是迎接新的一天。', duration: '2:00', src: 'about-time-1.mov' },
+  { id: 1, title: 'Before Sunset', titleZh: '日落巴黎', desc: 'A man and a woman are reluctant to part, lingering even though they will miss their flight. They talk and laugh, and the itinerary no longer matters.', descZh: '男女對彼此依依不捨，即使趕不上飛機也不捨得離開，他們有說有笑，行程早已不重要。', duration: '4:06', src: 'before-sunset-1.mov' },
+  { id: 2, title: 'Paris, Texas', titleZh: '德州巴黎', desc: 'A child separated from his mother by his parents\' divorce finally meets her again, and they hold each other tightly. The father chooses to step away, leaving the space to mother and son.', descZh: '因父母離異而與母親分離的孩子終於和母親見面，他們緊緊相擁在一起，而父親則是選擇離開，將空間留給母子。', duration: '2:30', src: 'taxa-paris-1.mov' },
+  { id: 3, title: 'The Pursuit of Happyness', titleZh: '尋找快樂的故事', desc: 'A man finally gets the job he has always dreamed of. He hugs his son tightly and sighs that the hardest days are now behind them.', descZh: '男人得到了夢寐以求的工作，他緊緊擁抱兒子，感嘆最辛苦的日子已經過去。', duration: '3:35', src: 'the-pursuit-1.mov' },
+  { id: 4, title: 'About Time', titleZh: '真愛每一天', desc: 'A man learns to live in the present. In everyday life, his wife and daughter already make him deeply happy; he decides to stop worrying about what he might miss, and instead welcome a new day.', descZh: '男人學會了活在當下，日常中他的妻女已經令他感到很幸福，他決定不再擔心錯過，而是迎接新的一天。', duration: '3:05', src: 'about-time-1.mov' },
 ];
 
 // 影片來源：預設走本地 /videos/（開發用）。部署時請設 NEXT_PUBLIC_VIDEO_BASE_URL 指向

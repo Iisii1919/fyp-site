@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
+import { clearParticipant } from '@/lib/participant';
 
 interface ThankYouProps {
   participantName?: string;
@@ -9,6 +10,14 @@ interface ThankYouProps {
 
 export default function ThankYou({ participantName }: ThankYouProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  // ⚠️ 研究到此結束 → 清掉參與者身分，這是必要的，不是清理雜物。
+  // 不清的話，同一台電腦的下一位參與者會沿用這一位的 Participant ID 與組別
+  // （組別只隨機決定一次），兩人的資料會被併成同一列，而且整台電腦的人都落在同一組，
+  // 50/50 隨機分派就失效了。詳細說明見 src/lib/participant.tsx 的 clearParticipant()。
+  useEffect(() => {
+    clearParticipant();
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;

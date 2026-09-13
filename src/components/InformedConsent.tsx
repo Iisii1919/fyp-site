@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { DocxItemView, groupDocxItems } from './DocxView';
 import { infoSheetItems } from './data/infoSheet';
@@ -14,6 +14,34 @@ const groups = groupDocxItems(infoSheetItems);
 
 export default function InformedConsent({ onAccepted }: InformedConsentProps) {
   const [isChecked, setIsChecked] = useState(false);
+
+  // ⚠️ 內容卡片是「一屏內可捲動」的設計（max-h-[46vh] overflow-y-auto），
+  // 但實測內容約 2841px、可見只有約 412px —— **85~88% 的內容在卡片下方看不到**，
+  // 而同意勾選框在卡片外面、永遠可見，於是參與者可以在幾乎沒讀到的情況下就勾同意。
+  // 這裡只補「卡片可以捲動」的提示（不改同意流程本身）：
+  // 卡片確實有溢出、而且還沒捲到底時才顯示，捲到底就消失。
+  // 是否要進一步「必須捲到底才能勾同意」屬於同意流程的變更，需先確認倫理審批。
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [canScroll, setCanScroll] = useState(false);
+  const [reachedBottom, setReachedBottom] = useState(false);
+
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el) return;
+    const update = () => {
+      const overflows = el.scrollHeight > el.clientHeight + 4;
+      setCanScroll(overflows);
+      setReachedBottom(!overflows || el.scrollTop + el.clientHeight >= el.scrollHeight - 8);
+    };
+    update();
+    el.addEventListener('scroll', update, { passive: true });
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener('scroll', update);
+      ro.disconnect();
+    };
+  }, []);
 
   const handleSubmit = () => {
     if (isChecked) {
@@ -65,32 +93,51 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
         </div>
 
         {/* 內容卡片 */}
-        <div className="glass-card p-6 md:p-8 mb-6 max-h-[46vh] overflow-y-auto pr-2">
-          <div className="space-y-5">
-            {groups.map((group, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.2 + i * 0.04, duration: 0.5 }}
-                className="border-l-2 border-[rgba(198,168,248,0.24)] pl-5 py-1"
-              >
-                {group.title && (
-                  <div className="mb-2">
-                    <h3 className="font-serif text-[#EAECEF] text-base font-semibold">{group.title}</h3>
-                  </div>
-                )}
+        {/* ⚠️ 提示做成「覆蓋在卡片底部」而不是卡片下方的另一行文字：
+            這一頁的內容本來就已經超過一個視窗高（實測 1440×900 時同意按鈕底部在 1023px），
+            在卡片下方多一行會把按鈕推得更下面。覆蓋層不佔任何版面高度。 */}
+        <div className="relative mb-6">
+          <div ref={cardRef} className="glass-card p-6 md:p-8 max-h-[46vh] overflow-y-auto pr-2">
+            <div className="space-y-5">
+              {groups.map((group, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.2 + i * 0.04, duration: 0.5 }}
+                  className="border-l-2 border-[rgba(198,168,248,0.24)] pl-5 py-1"
+                >
+                  {group.title && (
+                    <div className="mb-2">
+                      <h3 className="font-serif text-[#EAECEF] text-base font-semibold">{group.title}</h3>
+                    </div>
+                  )}
 
-                {group.items.length > 0 && (
-                  <div className="space-y-2">
-                    {group.items.map((item, j) => (
-                      <DocxItemView key={j} item={item} />
-                    ))}
-                  </div>
-                )}
-              </motion.div>
-            ))}
+                  {group.items.length > 0 && (
+                    <div className="space-y-2">
+                      {group.items.map((item, j) => (
+                        <DocxItemView key={j} item={item} />
+                      ))}
+                    </div>
+                  )}
+                </motion.div>
+              ))}
+            </div>
           </div>
+
+          {/* 捲動提示：內容有溢出、且還沒捲到底時才出現 */}
+          {canScroll && !reachedBottom && (
+            <div
+              className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-2xl h-16 flex items-end justify-center pb-1.5"
+              style={{ background: 'linear-gradient(to top, rgba(43,43,43,0.97) 45%, rgba(43,43,43,0))' }}
+              aria-hidden
+            >
+              <span className="text-[#C6A8F8] text-xs text-center px-4">
+                ↓ 向下捲動閱讀完整資訊
+                <span className="block text-[#8a8a8a] text-[11px]">Scroll down to read the full sheet</span>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* 同意勾選 */}

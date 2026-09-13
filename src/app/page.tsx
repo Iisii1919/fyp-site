@@ -13,7 +13,9 @@ import ThankYou from '@/components/ThankYou';
 import GroupGate from '@/components/GroupGate';
 import StepFooter from '@/components/StepFooter';
 import DevGroupSwitcher from '@/components/DevGroupSwitcher';
-import { ParticipantProvider } from '@/lib/participant';
+import ResumePrompt from '@/components/ResumePrompt';
+import { ParticipantProvider, clearParticipant } from '@/lib/participant';
+import { readProgress, saveProgress } from '@/lib/progress';
 import { useResearcherEscape } from '@/lib/useResearcherEscape';
 
 // 步驟重編（合併兩份前測 + 兩份後測 → 各一頁）：12 → 10
@@ -29,15 +31,67 @@ import { useResearcherEscape } from '@/lib/useResearcherEscape';
 //  9 ThankYou
 const TOTAL_STEPS = 10;
 
+// 給「接續上次進度」提示用的步驟名稱，順序要跟上面的步驟表一致。
+const STEP_LABELS = [
+  '開始頁',
+  '研究資料',
+  '同意書',
+  '前測問卷',
+  '準備觀影',
+  '影片',
+  '觀影回饋',
+  '分隔頁',
+  '後測問卷',
+  '完成',
+];
+
 export default function Home() {
   const [step, setStep] = useState(0);
   const [videoProgress, setVideoProgress] = useState(0);
+  // 上次未完成的步驟；非 null 時顯示接續提示。null 有兩種意思：
+  // 「沒有可接續的進度」與「已經回答過了」，兩者行為相同（正常顯示目前步驟）。
+  const [resumeAt, setResumeAt] = useState<number | null>(null);
+  // 是否已經讀過儲存的進度。在讀完之前不能寫入，否則 mount 時的
+  // saveProgress(0) 會把要接續的進度清掉。
+  const [progressLoaded, setProgressLoaded] = useState(false);
 
   const goNext = useCallback(() => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)), []);
 
   // 研究員專用逃生鍵（Shift + Alt + N）：所有自動跳轉都失效時，當場把場次救回來。
   // 詳見 src/lib/useResearcherEscape.ts 的說明 —— 刻意不給參與者任何提示。
   useResearcherEscape(goNext);
+
+  // 讀取上次的進度。放在 effect 而不是 useState 初始值，是因為初始值會在
+  // 伺服器端也算一次（那裡沒有 localStorage），會造成 hydration 不一致。
+  useEffect(() => {
+    const saved = readProgress();
+    // 完成頁（最後一步）不需要接續，超出範圍的值一律忽略
+    if (saved !== null && saved > 0 && saved < TOTAL_STEPS - 1) setResumeAt(saved);
+    setProgressLoaded(true);
+  }, []);
+
+  // 記錄目前步驟。等使用者回答完接續提示才開始寫，否則會蓋掉要接續的值。
+  useEffect(() => {
+    if (!progressLoaded || resumeAt !== null) return;
+    // 最後一步（完成頁）不需要接續，存 0 等於清除
+    saveProgress(step >= TOTAL_STEPS - 1 ? 0 : step);
+  }, [step, resumeAt, progressLoaded]);
+
+  const handleResume = useCallback(() => {
+    if (resumeAt !== null) setStep(resumeAt);
+    setResumeAt(null);
+  }, [resumeAt]);
+
+  // 「重新開始」= 整個 session 重來：清掉身分與進度後重新載入，
+  // 讓 assignParticipant() 產生新的參與者編號。
+  // 刻意用重新載入而不是只改 state —— 參與者身分是 ParticipantProvider 的 state，
+  // 而這裡（Home）在 provider 外面，拿不到它的 setter；
+  // 重新載入是唯一保證「新 ID + 乾淨畫面」且不會漏掉任何狀態的做法。
+  // 此時參與者還沒做任何事（畫面停在提示上），所以不會損失資料。
+  const handleRestart = useCallback(() => {
+    clearParticipant();
+    window.location.reload();
+  }, []);
 
   // 每次跳轉到新一步，先把視窗捲回最上方，讓該步從頂部開始顯示
   useEffect(() => {
@@ -146,6 +200,14 @@ export default function Home() {
     <ParticipantProvider>
       <main className="bg-[#3d3d3d] min-h-screen">
         <DevGroupSwitcher />
+
+        {resumeAt !== null && (
+          <ResumePrompt
+            label={STEP_LABELS[resumeAt] ?? '上一頁'}
+            onResume={handleResume}
+            onRestart={handleRestart}
+          />
+        )}
 
         {step === 0 && (
           <section className="relative w-full no-snap">

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
+import { clearProgress } from './progress';
 
 export type Group = 'sadness' | 'neutral';
 
@@ -83,6 +84,11 @@ export function getParticipant(): Participant | null {
 //      於是同一台電腦跑的所有人都落在同一組，50/50 隨機分派直接失效。
 // （2026-09-13 以 CDP 實測確認：走完整個流程到完成頁後，ID 與組別都仍然不變。）
 // 因此：完成研究時（ThankYou 掛載）一定要呼叫一次，見該元件的說明。
+//
+// 這裡也一併清掉「走到第幾步」的記錄（src/lib/progress.ts）。
+// 兩者代表同一件事：這一位的 session 結束了。刻意收在同一個函式裡，
+// 這樣「完成研究」與研究者開 `?new=1` 兩條路都不會漏清進度
+// —— 否則開 `?new=1` 換了人，卻還留著上一位的進度，畫面會跳出接續提示。
 export function clearParticipant(): void {
   if (typeof window === 'undefined') return;
   try {
@@ -90,6 +96,7 @@ export function clearParticipant(): void {
   } catch {
     // ignore
   }
+  clearProgress();
 }
 
 /**

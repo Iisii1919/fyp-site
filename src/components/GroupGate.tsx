@@ -35,10 +35,40 @@ export default function GroupGate({ onContinue }: GroupGateProps) {
             <p className="text-[#8a8a8a] text-xs mb-6">你將觀看一系列短片片段，請慢慢觀賞。</p>
 
             {/* 只顯示參與者編號，不顯示組別 */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-8" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}>
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}>
               <span className="text-[#8a8a8a] text-[10px] tracking-wider uppercase">Participant</span>
               <span className="text-[#EAECEF] text-xs font-mono">{participant.id}</span>
             </div>
+
+            {/* 耳機提示：影片有聲音，先提醒參與者戴耳機（剪影圖示 + 中英文字）。
+                放在按鈕正上方，因為參與者按下按鈕前一定會看到這裡。 */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: 0.4, duration: 0.7 }}
+              className="flex items-center gap-3 px-5 py-3.5 rounded-2xl mb-8 max-w-md mx-auto text-left"
+              style={{ background: 'rgba(198,168,248,0.10)', border: '1px solid rgba(198,168,248,0.32)' }}
+            >
+              <svg
+                className="w-8 h-8 shrink-0"
+                viewBox="0 0 24 24"
+                style={{ color: '#C6A8F8' }}
+                role="img"
+                aria-label="Headphones"
+              >
+                {/* 耳機剪影：粗頭帶（描邊）＋ 兩側實心耳罩 */}
+                <path d="M3.5 14.5V12a8.5 8.5 0 0 1 17 0v2.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                <rect x="1.5" y="13.5" width="5" height="8" rx="2.5" fill="currentColor" />
+                <rect x="17.5" y="13.5" width="5" height="8" rx="2.5" fill="currentColor" />
+              </svg>
+              <span className="leading-snug">
+                <span className="block text-[#EAECEF] text-sm font-medium">戴上耳機，效果更佳</span>
+                <span className="block text-[#9a9a9a] text-xs mt-1">
+                  Headphones recommended for the best experience
+                </span>
+              </span>
+            </motion.div>
 
             <div>
               <motion.button

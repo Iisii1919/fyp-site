@@ -12,7 +12,7 @@ import { H1_PAGE, H2_PAGE } from '@/lib/headingSizes';
 interface PreTest2Props {
   /** 這份問卷是否已提交（由 PreTest 追蹤，用來顯示進度）。 */
   submitted?: boolean;
-  /** 偵測到送出時通知 PreTest。是否跳頁由 PreTest 依「兩份都完成」判斷。 */
+  /** 偵測到送出時通知 PreTest。是否跳頁由 PreTest 依「三份都完成」判斷。 */
   onSubmitted?: () => void;
 }
 
@@ -76,7 +76,7 @@ export default function PreTest2({ submitted = false, onSubmitted }: PreTest2Pro
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
-        兩份前測問卷都提交後，才會自動繼續下一步。
+        提交後，請繼續填寫最後一份問卷（情緒調節問卷）。
       </p>
     </div>
   );

@@ -68,7 +68,7 @@ export default function PreTest1({ submitted = false, onSubmitted }: PreTest1Pro
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
-        提交問卷後，請繼續填寫第二份問卷。
+        提交問卷後，請繼續填寫下一份問卷。
       </p>
     </div>
   );

@@ -15,10 +15,12 @@ interface QuestionnaireProgressProps {
  * 同一頁有多份問卷時的進度提示。
  *
  * 為什麼需要這個：
- * 一頁疊兩份問卷時，參與者可能只做完第二份就以為結束了，
- * 第一份的資料就會缺漏（而且他們自己也無從得知）。
- * 所以除了「兩份都送出才前進」這個硬性規則外，
- * 還要讓他們隨時看得出還剩哪一份沒做，並且能一鍵跳回去補。
+ * 一頁疊多份問卷時，參與者可能只做完最後一份就以為結束了，
+ * 前面幾份的資料就會缺漏（而且他們自己也無從得知）。
+ * 所以除了「全部送出才前進」這個硬性規則外，
+ * 還要讓他們隨時看得出還剩哪幾份沒做，並且能一鍵跳回去補。
+ *
+ * ⚠️ 份數完全由 labels / done 的長度決定，不要在這裡寫死「兩份」。
  */
 export default function QuestionnaireProgress({ labels, done, onJumpTo }: QuestionnaireProgressProps) {
   const finished = done.filter(Boolean).length;
@@ -94,7 +96,7 @@ export default function QuestionnaireProgress({ labels, done, onJumpTo }: Questi
         </div>
       ) : (
         <p className="mt-5 pt-4 border-t border-[rgba(198,168,248,0.12)] text-[#d4bfff] text-xs">
-          兩份都已完成，正在前往下一步…
+          全部完成，正在前往下一步…
         </p>
       )}
     </motion.div>

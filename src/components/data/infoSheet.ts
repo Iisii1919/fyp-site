@@ -1,100 +1,55 @@
 import type { DocxItem } from '../DocxView';
 
-// Extracted from "C:\EdU\FYP\dark film\document\INFORMATION SHEET .docx"
-// (script: .workbuddy-ai/tmp/extract_docx.py)
+// Source: "C:\EdU\FYP\dark film\last proposal\Consent Form and Information Sheets_Lin Jiaquan_01.docx"
+//
+// 2026-10-01 — replaced with the REVISED information sheet. Changes vs the previous
+// version (extracted from "dark film\document\INFORMATION SHEET .docx"):
+//   * The revised sheet is ENGLISH-ONLY. All Chinese fragments below "謝謝閣下有興趣…"
+//     were template placeholders (the HREC form's own prompt lines such as
+//     「研究方法說明工作及步驟」/「闡述研究項目的目的」) that were being rendered to
+//     participants as if they were content. They are gone; do not reintroduce them.
+//   * Project title now ends "…and the Meaning of Life".
+//   * Procedure numbers corrected — the page now shows THREE questionnaires per
+//     sitting, not two. See INFO_SHEET_PROCEDURE_CHECK below; keep it in sync with
+//     `useQuestionnaireCount` in src/components/QuestionnaireProgress.tsx.
+//   * Supervisor name fixed to "Dr Lawrence Chan" (was "Dr Lawrance Chan Chi Lok").
 export const infoSheetItems: DocxItem[] = [
-  { type: 'p', text: '有關資料', bold: true },
-  { type: 'p', text: '傷感電影對增強心理韌性的影響', bold: true },
-  {
-    type: 'p',
-    text:
-      '誠邀閣下參加陳志樂博士負責監督，林家權負責執行的研究項目。她／他們是香港教育大學心理學系的教員和學生。',
-    bold: false,
-  },
-  { type: 'p', text: '研究項目簡介', bold: true },
-  { type: 'p', text: '闡述研究項目的目的', bold: false },
-  {
-    type: 'p',
-    text:
-      '有一種悖論認為，悲傷題材的電影會對人們的心理健康產生負面影響。本計畫旨在打破這個悖論，設計並評估一種基於悲傷主題電影的心理韌性增強工具。',
-    bold: false,
-  },
-  { type: 'p', text: '研究方法說明工作及步驟', bold: true },
-  {
-    type: 'p',
-    text:
-      '您首先需要完成 2 項前測，然後觀看 4 段影片並寫下回饋，最後完成 2 項後測。整個過程大約需要 30 分鐘。',
-    bold: false,
-  },
-  { type: 'p', text: '說明任何利益 (包括對參與者的補償)', bold: false },
-  {
-    type: 'p',
-    text:
-      '是次研究並不為閣下提供個人利益，但所搜集數據將對研究學習動機的問題提供寶貴的資料。',
-    bold: false,
-  },
-  { type: 'p', text: '說明任何風險 (若無, 請明確指出)', bold: true },
-  { type: 'p', text: '參與期間有可能面對的風險及不適', bold: false },
-  {
-    type: 'p',
-    text: '你可能會看幾部悲傷的電影，這些電影可能會引起輕微的痛苦或不適。',
-    bold: false,
-  },
-  { type: 'p', text: '如何降低風險', bold: false },
-  { type: 'p', text: '您可以隨時關閉網站，不會產生任何後果。', bold: false },
-  { type: 'p', text: '基本文本:', bold: false },
-  {
-    type: 'p',
-    text:
-      '閣下的參與純屬自願性質。閣下享有充分的權利在任何時候決定退出這項研究， 更不會因此引致任何不良後果。凡有關阁下的資料將會保密，一切資料的編碼只有研究人員得悉。',
-    bold: false,
-  },
-  {
-    type: 'p',
-    text:
-      '描述將如何發佈研究結果由於本研究是畢業設計項目，研究結果可能會與香港教育大學的學生和教職員工分享。除主動詢問外，不會主動與參與者分享研究結果。',
-    bold: true,
-  },
-  {
-    type: 'p',
-    text:
-      '如閣下想獲得更多有關這項研究的資料,請以電郵(s1160702@s.eduhk.hk)或電話(55200393)與本人或本人的導師陳志樂博士 (cchilok@eduhk.hk)聯絡。',
-    bold: false,
-  },
-  {
-    type: 'p',
-    text:
-      '如閣下對這項研究的操守有任何意見,可隨時與香港教育大學人類實驗對象操守委員會聯絡(電郵: hrec@eduhk.hk; 地址：香港教育大學研究與發展事務處)。',
-    bold: false,
-  },
-  { type: 'p', text: '謝謝閣下有興趣參與這項研究。', bold: false },
-  { type: 'p', text: '林家權', bold: false },
   { type: 'p', text: 'INFORMATION SHEET', bold: true },
   {
     type: 'p',
-    text: 'The Influence of Sadness Film on Enhancing Psychological Resilience',
+    text: 'The Influence of Sadness Film on Enhancing Psychological Resilience and the Meaning of Life',
     bold: true,
   },
   {
     type: 'p',
     text:
-      'You are invited to participate in the captioned research supervised by Dr Lawrance Chan Chi Lok and conducted by LIN Jiaquan, who are staff and student of the Department of Psychology in The Education University of Hong Kong.',
+      'You are invited to participate in the captioned research supervised by Dr Lawrence Chan and conducted by Lin Jiaquan, who are staff and student of the Department of Psychology in The Education University of Hong Kong.',
+    bold: false,
+  },
+
+  { type: 'p', text: 'The introduction of the research', bold: true },
+  {
+    type: 'p',
+    text:
+      "There is a paradox that sadness films have a negative influence on people's mental health. This project aims to design and measure a psychological resilience-enhancing tool based on sadness films.",
     bold: false,
   },
   {
     type: 'p',
     text:
-      'The introduction of the researchThere is a paradox that sadness films have a negative influence on people’s mental health. This project aims to break the paradox and design and measure a psychological resilience-enhancing tool based on sadness films.',
-    bold: true,
+      'This action research project will explore whether watching sadness films would help people enhance psychological resilience, mediated by cognitive reappraisal (Gross, 1998). An interactive website with several sadness film clips and short descriptions or neutral film clips and short descriptions will be used as a resilience-enhancing tool.',
+    bold: false,
   },
+
   { type: 'p', text: 'The methodology of the research', bold: true },
   { type: 'p', text: 'A) Procedure of the research', bold: false },
   {
     type: 'p',
     text:
-      'You will complete 2 pre-tests first, then watch 4 film clips and write down feedback, then do 2 post-tests. The whole session might take around 30 minutes',
+      'At the beginning, participants have to complete the CD-RISC-10, MLQ and ERQ as a pre-test. Then they will watch 4 sadness film clips or 4 neutral film clips, spending around 20 minutes. Subsequently, they will be asked 4 post-watching questions and they have to write down their feedback. After that, they have to complete the CD-RISC-10, adapted MLQ and ERQ as a post-test.',
     bold: false,
   },
+  { type: 'p', text: 'The process will take around 30 minutes.', bold: false },
   {
     type: 'p',
     text: 'B) Potential benefits (including compensation for participation)',
@@ -103,38 +58,49 @@ export const infoSheetItems: DocxItem[] = [
   {
     type: 'p',
     text:
-      'This study does not offer you any personal benefit, but the data collected will provide valuable information for studying the question of learning motivation.',
+      'First, the findings of this study may show that the website may become a low-cost, accessible tool for resilience enhancement.',
     bold: false,
   },
+  {
+    type: 'p',
+    text:
+      'Second, it can help the public understand that sad or heavy emotional experiences are not necessarily harmful, but they may be beneficial to mental health and reduce resistance to negative emotions.',
+    bold: false,
+  },
+
   { type: 'p', text: 'The potential risks of the research (State explicitly if none)', bold: true },
-  { type: 'p', text: 'Please describe in paragraph form:', bold: false },
-  { type: 'p', text: 'Is there any risk or discomfort?', bold: false },
+  { type: 'p', text: 'A) Is there any risk or discomfort?', bold: false },
   {
     type: 'p',
     text:
-      'You might watch a couple of sad films, which have a chance of causing slight distress or discomfort.',
+      'Participants may watch film clips related to sadness, tragedy, or desperation, which may cause them psychological stress or anxiety. To address these concerns, participants may withdraw at any time without consequence.',
     bold: false,
   },
-  { type: 'p', text: 'How to mitigate it?', bold: false },
-  { type: 'p', text: 'You can close the website at any time without consequence.', bold: false },
-  { type: 'p', text: 'C) Basic text:', bold: false },
+  { type: 'p', text: 'B) How to mitigate it?', bold: false },
   {
     type: 'p',
     text:
-      'Your participation in the project is voluntary. You have every right to withdraw from the study at any time without negative consequences. All information related to you will remain confidential, and will be identifiable by codes known only to the researcher.',
+      'A clear informed consent will be provided before participants engage in the study, the participants have to read and click the box "I have read the informed consent" before they really start.',
     bold: false,
   },
+  {
+    type: 'p',
+    text:
+      'Participation in the project is voluntary. Participants have every right to withdraw from the study at any time without negative consequences. All information related to you will remain confidential and will be identifiable by codes known only to the researcher.',
+    bold: false,
+  },
+
   { type: 'p', text: 'Describe how results will be potentially disseminated', bold: true },
   {
     type: 'p',
-    text:
-      'Since this study is a Capstone Final Year Project, the results might be shared with EdU students and staff. Will not share with participants proactively except for asking.',
+    text: 'The results will be disseminated as a thesis and an oral presentation',
     bold: false,
   },
+
   {
     type: 'p',
     text:
-      'If you would like to obtain more information about this study, please contact me by email at s1160702@s.eduhk.hk or telephone number 55200393, or my supervisor Dr Lawrance Chan Chi Lok by email at cchilok@eduhk.hk.',
+      'If you would like to obtain more information about this study, please contact me by email at S1160702@s.eduhk.hk or telephone number 55200393, or my supervisor Dr Lawrence Chan by email at cchilok@eduhk.hk.',
     bold: false,
   },
   {
@@ -143,6 +109,20 @@ export const infoSheetItems: DocxItem[] = [
       'If you have any concerns about the conduct of this research study, please do not hesitate to contact the Human Research Ethics Committee by email at hrec@eduhk.hk or by mail to Research and Development Office, The Education University of Hong Kong.',
     bold: false,
   },
+
   { type: 'p', text: 'Thank you for your interest in participating in this study.', bold: false },
-  { type: 'p', text: 'LIN Jiaquan', bold: false },
+  { type: 'p', text: 'Lin Jiaquan', bold: false },
 ];
+
+/**
+ * How many questionnaires the site actually shows per sitting. Each study phase
+ * (pre / post) renders three embedded forms: CD-RISC-10 and MLQ (the combined,
+ * shuffled form) plus the ERQ reappraisal subscale.
+ *
+ * The information sheet tells participants how many instruments they will complete,
+ * so the two must agree — this constant exists so the number is stated in ONE place
+ * on this side and can be diffed against the sheet text in review. If the site ever
+ * changes how many forms a phase renders, update both the sheet text above (the
+ * "CD-RISC-10, MLQ and ERQ" sentence) and `LABELS` in PreTest.tsx / PostTest.tsx.
+ */
+export const INFO_SHEET_PER_PHASE = 3;

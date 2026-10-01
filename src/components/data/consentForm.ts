@@ -49,7 +49,7 @@ export const consentFormItems: DocxItem[] = [
   {
     type: 'p',
     text:
-      'I,                     , hereby consent to participate in the captioned research supervised by Dr Lawrance Chan Chi Lok and conducted by LIN Jiaquan, who are staff and student of the Department of Psychology in The Education University of Hong Kong.',
+      'I,                     , hereby consent to participate in the captioned research supervised by Dr Lawrence Chan and conducted by LIN Jiaquan, who are staff and student of the Department of Psychology in The Education University of Hong Kong.',
     bold: false,
   },
   {

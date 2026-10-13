@@ -1,0 +1,633 @@
+/* =============================================================================
+   STYLE SAMPLE — DIRECTION 03: "WARM PAPER"
+   =============================================================================
+   Rewritten from scratch. Directions 01 and 02 both kept a DARK ground and
+   varied its hue, which is why 02 read to the user as "black and gold" — still
+   the same site. This direction changes the fundamental choice: it is a
+   LIGHT-FIRST, paper-ground design.
+
+   Layout, spacing, grid structure and information order are intentionally
+   UNCHANGED from the approved layout. What is new:
+
+     1. LIGHT PAPER GROUND by default. Warm ivory (#fbf7f0), not white, not
+        dark. Dark mode exists as the alternate.
+     2. A DEEPER, EARTHIER ACCENT. Terracotta (#c2571f) rather than pale gold,
+        so the accent reads as printed ink rather than as a glow on black.
+     3. EDITORIAL TYPE PAIRING. A warm text serif for display (Fraunces, a
+        soft "old-style" face with optical sizing) against a neutral grotesque
+        for UI. The serif is set in a warmer colour than the body.
+     4. SOFT SHAPE LANGUAGE with a *larger* radius than 02, plus visible warm
+        shadows so panels sit ON the paper instead of being outlined on black.
+     5. MOTION WITH WEIGHT. Springs and gentle overshoot, a cursor-tracked
+        highlight, magnetic buttons, and a scroll-linked progress line.
+        Everything is transform/opacity plus colour; no layout properties.
+
+   ⚠️ Cascade note. `globals.css` declares `h1..h4` / `p` OUTSIDE any @layer, so
+   unlayered rules beat @layer utilities no matter the specificity of a utility
+   class. Every rule here that sets a size is therefore written as
+   `.ss-root` + element/class with a deliberate element qualifier where needed
+   (`p.ss-body`, `span.ss-body`). Do not "simplify" those selectors.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   Palette. Everything is a variable so the two themes are one class apart.
+   The warm ramp: every neutral has R > B. That is the actual test for warmth;
+   a warm accent on a cool ramp still reads cool (the mistake in direction 01).
+   --------------------------------------------------------------------------- */
+.ss-root {
+  /* Light paper (DEFAULT in this direction) */
+  --ss-bg: #fbf7f0;          /* warm ivory paper */
+  --ss-bg-2: #ffffff;        /* raised card */
+  --ss-bg-3: #f4ede1;        /* sunken / alternating band */
+  --ss-bg-4: #ece2d2;        /* deeper band, e.g. ticker */
+  --ss-line: rgba(58, 44, 30, 0.13);
+  --ss-line-2: rgba(58, 44, 30, 0.24);
+  --ss-ink: #241a12;         /* warm near-black brown */
+  --ss-ink-2: #57493c;       /* warm brown-grey */
+  --ss-ink-3: #8b7e6e;       /* muted */
+  --ss-accent: #c2571f;      /* TERRACOTTA — printed ink, not gold */
+  --ss-accent-2: #e08a4a;    /* lighter end for gradients */
+  --ss-accent-soft: rgba(194, 87, 31, 0.09);
+  --ss-accent-line: rgba(194, 87, 31, 0.32);
+  --ss-sage: #6d7f63;        /* a single supporting earth tone */
+  --ss-shadow: 0 2px 4px -1px rgba(58, 44, 30, 0.06), 0 12px 28px -8px rgba(58, 44, 30, 0.13);
+  --ss-shadow-lg: 0 4px 8px -2px rgba(58, 44, 30, 0.07), 0 26px 52px -14px rgba(58, 44, 30, 0.20);
+
+  /* Motion vocabulary */
+  --ss-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --ss-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ss-t-fast: 200ms;
+  --ss-t-mid: 400ms;
+  --ss-t-slow: 820ms;
+
+  background: var(--ss-bg);
+  color: var(--ss-ink);
+  min-height: 100vh;
+  font-family: var(--ss-font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Dark mode — the ALTERNATE, not the default. Warm brown-black, never blue. */
+.ss-root.ss-dark {
+  --ss-bg: #17110c;
+  --ss-bg-2: #211913;
+  --ss-bg-3: #2b211a;
+  --ss-bg-4: #352a21;
+  --ss-line: rgba(255, 240, 220, 0.12);
+  --ss-line-2: rgba(255, 240, 220, 0.22);
+  --ss-ink: #f7efe3;
+  --ss-ink-2: #cbbba6;
+  --ss-ink-3: #97866f;
+  --ss-accent: #e8924e;
+  --ss-accent-2: #f0ad72;
+  --ss-accent-soft: rgba(232, 146, 78, 0.14);
+  --ss-accent-line: rgba(232, 146, 78, 0.34);
+  --ss-sage: #8b9c7e;
+  --ss-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.4), 0 12px 28px -8px rgba(0, 0, 0, 0.5);
+  --ss-shadow-lg: 0 4px 8px -2px rgba(0, 0, 0, 0.45), 0 26px 52px -14px rgba(0, 0, 0, 0.62);
+}
+
+/* ⚠️ Measured, not assumed. globals.css has an UNLAYERED `body { background:
+   var(--bg-deep) }` (#3d3d3d) and `body { color: var(--ink) }`, which beat
+   everything in this file for the body element. Without the rules below the
+   body paints its own grey over the paper and only the panels look right.
+   Scoped as `.ss-root body` so the live site stays untouched. */
+.ss-root body {
+  background: var(--ss-bg);
+  color: var(--ss-ink);
+}
+
+/* ---------------------------------------------------------------------------
+   Typography
+   --------------------------------------------------------------------------- */
+.ss-root .ss-display {
+  font-family: var(--ss-font-display);
+  font-weight: 400;
+  font-variation-settings: 'SOFT' 40, 'WONK' 1;
+  line-height: 0.98;
+  letter-spacing: -0.022em;
+  color: var(--ss-ink);
+  margin: 0;
+  text-wrap: balance;
+}
+
+.ss-root .ss-h1 { font-size: clamp(3rem, 8.4vw, 8.2rem); }
+.ss-root .ss-h2 { font-size: clamp(2rem, 4.4vw, 3.5rem); }
+.ss-root .ss-h3 { font-size: clamp(1.25rem, 2vw, 1.65rem); line-height: 1.22; }
+
+/* Body copy. Declared twice (p and span) and element-qualified: the qualifier
+   is required to beat globals' unlayered `p` rule, and the span case exists
+   because the first `.ss-body` in the DOM is a <span> in a caption. Omitting
+   either one produces a real, measurable 16px-instead-of-17px bug. */
+.ss-root p.ss-body,
+.ss-root span.ss-body {
+  font-size: 1.0625rem;
+  line-height: 1.72;
+  color: var(--ss-ink-2);
+  margin: 0;
+  max-width: 62ch;
+}
+.ss-root p.ss-small,
+.ss-root span.ss-small {
+  font-size: 0.9375rem;
+  line-height: 1.68;
+  color: var(--ss-ink-3);
+  margin: 0;
+  max-width: 62ch;
+}
+.ss-root .ss-body-tight { font-size: 1rem; line-height: 1.66; }
+.ss-root .ss-small-tight { font-size: 0.875rem; line-height: 1.6; }
+.ss-root .ss-caption { color: var(--ss-ink-3); }
+
+/* Instrumentation type. Kept, but it is now a warm brown label rather than a
+   pale grey one, and the tracking is slightly tighter so it reads as a label
+   rather than as terminal output. */
+.ss-root .ss-mono {
+  font-family: var(--ss-font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ss-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.ss-root .ss-accent-text { color: var(--ss-accent); }
+
+.ss-root .ss-rule {
+  height: 1px;
+  background: var(--ss-line);
+  border: 0;
+  margin: 0;
+  width: 100%;
+}
+
+/* A hand-drawn-feeling underline under section eyebrows. Slightly imperfect on
+   purpose: a perfectly straight rule reads as a table, not as a printed page. */
+.ss-root .ss-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--ss-accent);
+}
+.ss-root .ss-eyebrow::after {
+  content: '';
+  width: 34px;
+  height: 1px;
+  background: var(--ss-accent);
+  opacity: 0.5;
+}
+
+/* ---------------------------------------------------------------------------
+   Paper texture. A very faint grain over the whole page. Costs no layout
+   (fixed overlay, pointer-events none) and is the main thing that makes a flat
+   colour read as paper rather than as a fill.
+   --------------------------------------------------------------------------- */
+.ss-root .ss-paper {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  background-image:
+    radial-gradient(1200px 560px at 8% -6%, rgba(224, 138, 74, 0.10), transparent 60%),
+    radial-gradient(900px 620px at 102% 4%, rgba(109, 127, 99, 0.07), transparent 58%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E");
+}
+.ss-root.ss-dark .ss-paper {
+  opacity: 0.35;
+  background-image:
+    radial-gradient(1200px 560px at 8% -6%, rgba(232, 146, 78, 0.09), transparent 60%),
+    radial-gradient(900px 620px at 102% 4%, rgba(139, 156, 126, 0.06), transparent 58%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.06'/%3E%3C/svg%3E");
+}
+.ss-root .ss-above { position: relative; z-index: 1; }
+
+/* ---------------------------------------------------------------------------
+   Surfaces. Warm cards that sit ON the paper: larger radius than 02, a real
+   drop shadow, and a hairline that is warm rather than grey.
+   --------------------------------------------------------------------------- */
+.ss-root .ss-panel {
+  position: relative;
+  background: var(--ss-bg-2);
+  border: 1px solid var(--ss-line);
+  border-radius: 22px;
+  box-shadow: var(--ss-shadow);
+  transition: background-color var(--ss-t-mid) var(--ss-ease),
+              border-color var(--ss-t-mid) var(--ss-ease),
+              box-shadow var(--ss-t-mid) var(--ss-ease),
+              transform var(--ss-t-mid) var(--ss-ease);
+}
+.ss-root .ss-panel-3 { background: var(--ss-bg-3); }
+.ss-root .ss-panel-flat { box-shadow: none; }
+
+.ss-root .ss-panel.ss-interactive { cursor: pointer; }
+.ss-root .ss-panel.ss-interactive:hover {
+  border-color: var(--ss-accent-line);
+  transform: translateY(-4px);
+  box-shadow: var(--ss-shadow-lg);
+}
+
+/* ---------------------------------------------------------------------------
+   Buttons — "magnetic": they lift, glow from beneath, and squash on press.
+   The sweep is a GPU-composited ::after, so it never repaints the label.
+   --------------------------------------------------------------------------- */
+.ss-root .ss-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.7rem;
+  border: 1px solid var(--ss-accent-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ss-accent);
+  font-family: var(--ss-font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  padding: 1rem 1.75rem;
+  cursor: pointer;
+  overflow: hidden;
+  isolation: isolate;
+  transition: background-color var(--ss-t-fast) var(--ss-ease),
+              color var(--ss-t-fast) var(--ss-ease),
+              border-color var(--ss-t-fast) var(--ss-ease),
+              box-shadow var(--ss-t-mid) var(--ss-ease),
+              transform var(--ss-t-mid) var(--ss-spring);
+}
+.ss-root .ss-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -130%;
+  width: 55%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  transform: skewX(-18deg);
+  transition: left 0.75s var(--ss-ease);
+  pointer-events: none;
+  z-index: 2;
+}
+.ss-root .ss-btn:hover::after { left: 135%; }
+.ss-root .ss-btn:hover {
+  background: var(--ss-bg-3);
+  border-color: var(--ss-accent);
+  /* --tx/--ty are the magnetic offset, written from JS on mousemove. Declared
+     here with a 0px fallback so the button does not jump when the pointer
+     first lands on it. Composed with the lift in one transform so the two
+     cannot fight over the property. */
+  transform: translate3d(var(--tx, 0px), calc(var(--ty, 0px) - 3px), 0);
+  box-shadow: 0 14px 26px -12px rgba(194, 87, 31, 0.5);
+}
+.ss-root .ss-btn:active {
+  transform: translate3d(var(--tx, 0px), var(--ty, 0px), 0) scale(0.975);
+  transition-duration: 90ms;
+}
+.ss-root .ss-btn:focus-visible { outline: 2px solid var(--ss-accent); outline-offset: 3px; }
+.ss-root .ss-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+.ss-root .ss-btn:disabled:hover {
+  background: transparent;
+  transform: none;
+  box-shadow: none;
+  border-color: var(--ss-accent-line);
+}
+.ss-root .ss-btn:disabled:hover::after { left: -130%; }
+
+.ss-root .ss-btn-solid {
+  background: var(--ss-accent);
+  border-color: var(--ss-accent);
+  color: #fff8f0;
+}
+.ss-root .ss-btn-solid:hover {
+  background: var(--ss-ink);
+  border-color: var(--ss-ink);
+  color: var(--ss-bg);
+  box-shadow: 0 16px 30px -12px rgba(36, 26, 18, 0.5);
+}
+
+/* ---------------------------------------------------------------------------
+   Film frame. On paper the "cinema" read comes from the black stage itself, so
+   the frame can be softer and warmer around it.
+   --------------------------------------------------------------------------- */
+.ss-root .ss-frame {
+  position: relative;
+  background: #0d0906;
+  border: 1px solid var(--ss-line-2);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: var(--ss-shadow-lg);
+}
+.ss-root .ss-letterbox {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 7.5%;
+  background: #000;
+  pointer-events: none;
+  z-index: 5;
+}
+.ss-root .ss-letterbox.ss-top { top: 0; }
+.ss-root .ss-letterbox.ss-bottom { bottom: 0; }
+
+.ss-root .ss-sprockets {
+  position: absolute;
+  top: 12%;
+  bottom: 12%;
+  left: 8px;
+  width: 3px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 9;
+  pointer-events: none;
+  opacity: 0.5;
+}
+.ss-root .ss-sprockets i {
+  display: block;
+  width: 3px;
+  height: 7px;
+  border-radius: 2px;
+  background: var(--ss-accent-2);
+}
+
+/* ---------------------------------------------------------------------------
+   Fields
+   --------------------------------------------------------------------------- */
+.ss-root .ss-field {
+  width: 100%;
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid var(--ss-line-2);
+  color: var(--ss-ink);
+  font-family: var(--ss-font-display);
+  font-size: 1.35rem;
+  padding: 0.55rem 0;
+  outline: none;
+  transition: border-color var(--ss-t-mid) var(--ss-ease),
+              background-color var(--ss-t-mid) var(--ss-ease);
+}
+.ss-root .ss-field::placeholder { color: var(--ss-ink-3); font-style: italic; }
+.ss-root .ss-field:hover { border-bottom-color: var(--ss-accent-line); }
+.ss-root .ss-field:focus {
+  border-bottom-color: var(--ss-accent);
+  background-color: var(--ss-accent-soft);
+}
+
+/* ---------------------------------------------------------------------------
+   Clip index. Rows now lift slightly and warm their rule, and the active row
+   gets a filled number chip — legible at a glance, no layout change.
+   --------------------------------------------------------------------------- */
+.ss-root .ss-index-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 4.5rem 1fr auto;
+  align-items: baseline;
+  gap: 1.5rem;
+  padding: 1.5rem 0;
+  border-top: 1px solid var(--ss-line);
+  cursor: pointer;
+  transition: background-color var(--ss-t-mid) var(--ss-ease),
+              padding-left var(--ss-t-mid) var(--ss-ease);
+}
+.ss-root .ss-index-row::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  width: 3px;
+  height: 0;
+  border-radius: 2px;
+  background: var(--ss-accent);
+  transform: translateY(-50%);
+  opacity: 0;
+  transition: height var(--ss-t-mid) var(--ss-ease), opacity var(--ss-t-mid) var(--ss-ease);
+}
+.ss-root .ss-index-row:hover {
+  background: var(--ss-accent-soft);
+  padding-left: 0.9rem;
+}
+.ss-root .ss-index-row:hover::before { height: 62%; opacity: 1; }
+.ss-root .ss-index-row.ss-active { background: var(--ss-accent-soft); }
+.ss-root .ss-index-row.ss-active::before { height: 62%; opacity: 1; }
+.ss-root .ss-index-row:last-child { border-bottom: 1px solid var(--ss-line); }
+
+/* The number chip on the active row. */
+.ss-root .ss-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2.1rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 999px;
+  font-family: var(--ss-font-mono);
+  font-size: 0.6875rem;
+  letter-spacing: 0.08em;
+  background: transparent;
+  color: var(--ss-ink-3);
+  border: 1px solid var(--ss-line);
+  transition: background-color var(--ss-t-fast) var(--ss-ease),
+              color var(--ss-t-fast) var(--ss-ease),
+              border-color var(--ss-t-fast) var(--ss-ease),
+              transform var(--ss-t-fast) var(--ss-spring);
+}
+.ss-root .ss-index-row:hover .ss-chip { transform: scale(1.06); }
+.ss-root .ss-chip.ss-chip-on {
+  background: var(--ss-accent);
+  border-color: var(--ss-accent);
+  color: #fff8f0;
+}
+
+/* ---------------------------------------------------------------------------
+   Scale. A continuous track with a filled selection, so the 1–7 range reads as
+   a range rather than as seven unrelated boxes.
+   --------------------------------------------------------------------------- */
+.ss-root .ss-scale {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.ss-root .ss-scale-item {
+  flex: 1;
+  text-align: center;
+  padding: 0.85rem 0.25rem;
+  border: 1px solid var(--ss-line);
+  border-right: 0;
+  background: transparent;
+  color: var(--ss-ink-2);
+  font-family: var(--ss-font-mono);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all var(--ss-t-fast) var(--ss-ease);
+}
+.ss-root .ss-scale-item:last-child { border-right: 1px solid var(--ss-line); }
+.ss-root .ss-scale-item:hover {
+  border-color: var(--ss-accent-line);
+  color: var(--ss-ink);
+  background: var(--ss-accent-soft);
+}
+.ss-root .ss-scale-item.ss-on {
+  background: var(--ss-accent);
+  border-color: var(--ss-accent);
+  color: #fff8f0;
+  font-weight: 700;
+  border-radius: 13px;
+  transform: scale(1.07);
+  z-index: 2;
+  box-shadow: 0 8px 18px -8px rgba(194, 87, 31, 0.6);
+}
+.ss-root .ss-scale-item.ss-on + .ss-scale-item { border-left-color: var(--ss-accent); }
+/* ⚠️ Order matters. These come AFTER .ss-on so the ends of the track stay
+   rounded even when the first or last cell is the selected one; without them
+   selecting an end cell visibly squares off the strip. */
+.ss-root .ss-scale-item:first-child { border-radius: 13px 0 0 13px; }
+.ss-root .ss-scale-item:last-child  { border-radius: 0 13px 13px 0; }
+.ss-root .ss-scale-item.ss-on:first-child { border-radius: 13px 0 0 13px; }
+.ss-root .ss-scale-item.ss-on:last-child  { border-radius: 0 13px 13px 0; }
+
+/* ---------------------------------------------------------------------------
+   Consent tick box — a rounded square that springs when ticked.
+   --------------------------------------------------------------------------- */
+.ss-root .ss-tick {
+  width: 18px;
+  height: 18px;
+  border-style: solid;
+  border-width: 1.5px;
+  border-radius: 7px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  flex: none;
+  transition: background-color var(--ss-t-fast) var(--ss-ease),
+              border-color var(--ss-t-fast) var(--ss-ease),
+              color var(--ss-t-fast) var(--ss-ease),
+              transform var(--ss-t-fast) var(--ss-spring),
+              box-shadow var(--ss-t-fast) var(--ss-ease);
+}
+
+/* ---------------------------------------------------------------------------
+   Motion
+   --------------------------------------------------------------------------- */
+
+/* Entrance: elements settle into place with a touch of scale. */
+@keyframes ss-settle {
+  from { opacity: 0; transform: translateY(16px) scale(0.982); filter: blur(7px); }
+  to   { opacity: 1; transform: translateY(0) scale(1);        filter: blur(0); }
+}
+.ss-root .ss-settle-in { animation: ss-settle var(--ss-t-slow) var(--ss-ease) both; }
+
+@keyframes ss-marquee {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.ss-root .ss-marquee-track {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ss-marquee 46s linear infinite;
+  will-change: transform;
+}
+
+/* Cursor-tracked highlight. --mx/--my are written from JS so this never
+   triggers a React render; only the gradient layer invalidates. */
+.ss-root .ss-glow-card { position: relative; overflow: hidden; }
+.ss-root .ss-glow-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--ss-t-mid) var(--ss-ease);
+  background: radial-gradient(
+    280px circle at var(--mx, 50%) var(--my, 50%),
+    var(--ss-accent-soft),
+    transparent 70%
+  );
+  z-index: 3;
+}
+.ss-root .ss-glow-card:hover::after { opacity: 1; }
+
+.ss-root .ss-link {
+  position: relative;
+  text-decoration: none;
+  transition: color var(--ss-t-fast) var(--ss-ease);
+}
+.ss-root .ss-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -2px;
+  height: 1px;
+  background: var(--ss-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--ss-t-mid) var(--ss-ease);
+}
+.ss-root .ss-link:hover { color: var(--ss-accent); }
+.ss-root .ss-link:hover::after { transform: scaleX(1); }
+
+/* Scroll progress line. Scales rather than resizing, so it never reflows. */
+.ss-root .ss-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  transform-origin: left;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--ss-accent), var(--ss-accent-2), var(--ss-sage));
+  z-index: 100;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* A faint drift, used sparingly. */
+@keyframes ss-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50%      { transform: translate3d(0, -9px, 0); }
+}
+.ss-root .ss-drift { animation: ss-drift 10s ease-in-out infinite; }
+
+/* A section number that draws its own rule in on reveal. */
+@keyframes ss-line-in {
+  from { transform: scaleX(0); }
+  to   { transform: scaleX(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-root .ss-settle-in,
+  .ss-root .ss-drift,
+  .ss-root .ss-marquee-track { animation: none !important; }
+  .ss-root .ss-btn,
+  .ss-root .ss-btn::after,
+  .ss-root .ss-panel,
+  .ss-root .ss-index-row,
+  .ss-root .ss-index-row::before,
+  .ss-root .ss-chip,
+  .ss-root .ss-scale-item { transition: none !important; }
+  .ss-root .ss-btn:hover,
+  .ss-root .ss-panel.ss-interactive:hover,
+  .ss-root .ss-scale-item.ss-on,
+  .ss-root .ss-index-row:hover .ss-chip { transform: none !important; }
+  /* The magnetic offset is JS-driven, so suppressing the transform above is not
+     enough on its own — the button also has to stop being a magnet. page.tsx
+     checks the same media query before binding, so nothing writes --tx here;
+     these fallbacks cover the case where the preference is toggled at runtime. */
+  .ss-root .ss-btn:hover,
+  .ss-root .ss-btn:active { --tx: 0px; --ty: 0px; }
+  .ss-root .ss-index-row:hover { padding-left: 0; }
+  .ss-root .ss-glow-card::after { display: none; }
+  .ss-root .ss-progress { display: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Media queries
+   --------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+  .ss-root .ss-index-row {
+    grid-template-columns: 3rem 1fr;
+    gap: 1rem;
+  }
+  .ss-root .ss-index-row > *:last-child { grid-column: 2; }
+}

@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Apps Script — can we read the answers?</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<style>
+  :root{
+    --bg:#f7f7f5; --ink:#1c1c1e; --muted:#6b6b70; --line:#e2e2df;
+    --ok:#1a7f4b; --okbg:#eaf6ef; --bad:#b3261e; --badbg:#fdecea;
+    --warn:#8a5a00; --warnbg:#fdf3e0;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; padding:40px 20px 80px;
+    background:var(--bg); color:var(--ink);
+    font:15px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans TC",sans-serif;
+  }
+  .wrap{max-width:860px;margin:0 auto}
+  h1{font-size:26px;margin:0 0 4px;letter-spacing:-.01em}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 32px}
+  h2{font-size:17px;margin:38px 0 12px;padding-top:22px;border-top:1px solid var(--line)}
+  h2:first-of-type{border-top:0;padding-top:0}
+  p{margin:0 0 12px}
+  ul{margin:0 0 12px;padding-left:22px}
+  li{margin:4px 0}
+  code{background:#ececea;padding:1px 5px;border-radius:4px;font-size:13px;font-family:ui-monospace,Menlo,Consolas,monospace}
+  pre{background:#1c1c1e;color:#e8e8e6;padding:14px 16px;border-radius:10px;overflow-x:auto;font-size:12.5px;line-height:1.55}
+  pre code{background:none;color:inherit;padding:0}
+  table{width:100%;border-collapse:collapse;font-size:14px;margin:0 0 16px}
+  th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-weight:600;color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+  .card{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:#fff;margin:0 0 16px}
+  .verdict{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;margin-right:8px;vertical-align:1px;letter-spacing:.03em}
+  .v-ok{color:var(--ok);background:var(--okbg)}
+  .v-bad{color:var(--bad);background:var(--badbg)}
+  .v-warn{color:var(--warn);background:var(--warnbg)}
+  .note{background:#fff;border-left:3px solid #c9c9c4;padding:12px 16px;border-radius:0 8px 8px 0;margin:0 0 16px;color:#3a3a3c;font-size:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>咁究竟有咩方法可以讀到答案？</h1>
+  <p class="sub">Can the website read the answers the participant types into the embedded Google Form?</p>
+
+  <div class="card">
+    <span class="verdict v-bad">SHORT ANSWER</span>
+    <strong>讀唔到 —— 唔係未做，而係瀏覽器安全模型（同源政策）刻意唔准。</strong>
+    <p style="margin-top:10px">
+      <code>&lt;iframe&gt;</code> 同網站屬於<strong>唔同網域</strong>（<code>docs.google.com</code> vs
+      你個 <code>localhost:3000</code> / netlify 網域），所以 JavaScript 完全讀唔到入面嘅 DOM：
+      讀 <code>contentDocument</code> 會 <code>null</code>、讀 <code>contentWindow</code> 會拋
+      SecurityError。呢個唔係 Google Forms 特別難搞，係<strong>所有第三方嵌入都一樣</strong>。
+    </p>
+  </div>
+
+  <div class="note">
+    其實你個網站入面已經有一句註解寫住呢件事（<code>GoogleFormEmbed.tsx</code> 第 34 行）：
+    「Google 的嵌入表單不會對外送 postMessage（實測 0 則），故不採用該訊號。」
+    —— 即係我早就實測過，答案係<strong>零個</strong>訊息送出來。
+  </div>
+
+  <h2>咁你而家實際係點拿到答案嘅？</h2>
+  <p>靠<strong>兩條獨立嘅路</strong>，各有各用途：</p>
+
+  <table>
+    <thead>
+      <tr><th>道路</th><th>走幾時</th><th>你拿到咩</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>表單回應試算表</strong><br><span style="color:var(--muted);font-size:13px">Google 自己嘅伺服器對伺服器</span></td>
+        <td>一次過，收完資料之後</td>
+        <td>全部答案：年齡、院校、BRS、CD-RISC-10、MLQ、ERQ 逐題分數</td>
+      </tr>
+      <tr>
+        <td><strong><code>postMessage</code></strong><br><span style="color:var(--muted);font-size:13px">即時、頁面內</span></td>
+        <td>參與者填嘅當下</td>
+        <td>❌ <strong>冇</strong> —— 實測只有 0 則</td>
+      </tr>
+      <tr>
+        <td><strong>讀 iframe DOM</strong></td>
+        <td>—</td>
+        <td>❌ <strong>跨網域封鎖</strong>，連 <code>contentDocument</code> 都係 null</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p style="font-size:14px;color:var(--muted)">
+    網站端<strong>唯一</strong>拿得到嘅即時訊號，就係「同一個 src 又再 load 一次」
+    （即送出）。呢個訊號已經用咗喺自動跳轉上面。
+  </p>
+
+  <h2>咁「符合的話就直接跳轉」可唔可以做到？</h2>
+  <div class="card">
+    <span class="verdict v-warn">要付出代價</span>
+    <strong>得，但唔可以靠 Google Forms。要換成一個你控制得到嘅表單。</strong>
+  </div>
+  <p>Google Forms 嵌入係「黑盒」——你送得入去（靠 URL 預填參數），但攞唔返出嚟。
+     要真正做到「答完即刻知道符唔符合、自動跳頁」，只有三條路：</p>
+
+  <table>
+    <thead><tr><th>方案</th><th>做得到咩</th><th>代價</th></tr></thead>
+    <tbody>
+      <tr>
+        <td><strong>A. 換成網站自己嘅表單</strong></td>
+        <td>完全控制：即時驗證、符合才顯示「繼續」、答案直接寫入你自己嘅資料庫</td>
+        <td>要重寫篩選表單（4 題而已）；唔再係 Google Form，如果你要交「Google 表單」俾 HREC 就要另外交代</td>
+      </tr>
+      <tr>
+        <td><strong>B. 保持 Google 表單，改用 Apps Script 做 API</strong></td>
+        <td>表單照收，但答案可以事後自動同步／回推</td>
+        <td>仍然係<strong>事後</strong>，唔係即時；要部署 Web App + 設定權限；複雜好多</td>
+      </tr>
+      <tr>
+        <td><strong>C. 現狀：手動按鈕 + 事後核對</strong><br><span style="color:var(--muted);font-size:13px">（我而家做嘅）</span></td>
+        <td>零風險、零改動、符合你原本嘅表單</td>
+        <td>按鈕可以未填完就按；靠 <code>auditParticipantIntegrity()</code> 事後抓漏</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>順便：點解 <code>?new=1</code> 開唔到？</h2>
+  <div class="card">
+    <span class="verdict v-bad">唔係網址問題</span>
+    <code>?new=1</code> 唔會令頁面載入失敗 —— 佢只係一個 query parameter。載入失敗係因為
+    <strong>dev server（port 3000）冇開</strong>。
+  </div>
+  <p>要開嘅話，在 <code>C:\Users\linji\edu-fpy</code> 執行：</p>
+  <pre><code>npm run dev</code></pre>
+  <p>等見到 <code>✓ Ready in ...</code> 之後，再開
+     <code>http://localhost:3000/?new=1</code>。</p>
+  <div class="note">
+    <strong>⚠️ 一個唔明顯嘅陷阱：</strong><code>npm run dev</code> 一定要留喺一個
+    <strong>開住嘅終端機視窗</strong>裡面行。如果係由自動化工具喺背景叫起佢，
+    工具一交還控制權個 process 就會被整批回收 —— 之後所有頁面檢查都會「假死」
+    （度到 0px、click 冇反應），但其實只係 server 唔見咗。
+  </div>
+
+  <h2>所以「按鈕可以偷按」呢個窿，實際有幾大？</h2>
+  <ul>
+    <li>參與者要<strong>刻意</strong>跳過一份 4 題、30 秒填完嘅表單，先會發生。</li>
+    <li>真發生嘅話，佢<strong>唔會有</strong>篩選表單嘅回應記錄 → 你事後一定查得到。</li>
+    <li>加上 Facebook／Instagram 招募本身就係自願報名，報名嘅人多數符合條件。</li>
+  </ul>
+  <p>如果你覺得呢個窿唔可以接受，最乾淨嘅做法係 <strong>方案 A</strong>：
+     把 4 條題目搬入網站自己做（年齡下拉、院校下拉、兩個確認），
+     咁就可以做到你原本想要嘅「符合先顯示繼續、唔符合直接擋」。
+     要嘅話話我知，我幫你改。</p>
+
+</div>
+</body>
+</html>

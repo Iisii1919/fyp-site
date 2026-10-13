@@ -83,7 +83,7 @@ export default function InformedConsent({ onAccepted }: InformedConsentProps) {
 
           {/* 研究資訊 */}
           <div className="text-sm space-y-1">
-            <p className="text-[#EAECEF] font-serif font-semibold">The Influence of Sadness Film on Enhancing Psychological Resilience</p>
+            <p className="text-[#EAECEF] font-serif font-semibold">The Influence of Sadness Film on Enhancing Psychological Resilience and the Meaning of Life</p>
             <p className="text-[#C6A8F8] text-xs">
               LIN Jiaquan &middot; Department of Psychology &middot; Supervisor: Dr. Lawrence Chan
             </p>

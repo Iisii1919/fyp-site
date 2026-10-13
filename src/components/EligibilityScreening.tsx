@@ -34,10 +34,19 @@ import { H1_PAGE, H2_PAGE } from '@/lib/headingSizes';
 // 改成原生表單後，答案就在本地 state 裡 → 網站能即時、準確地判斷資格，
 // 不符合的人**看不到繼續按鈕**，符合的人自動前進。這正是原本做不到的事。
 //
-// （另一條路「保留 Google 表單 + Apps Script 當 API」評估後放棄：
-//  trigger 是非同步的，網站只能輪詢；而且篩選表單是匿名的，
-//  回應裡沒有任何欄位能對應回站在螢幕前的這個人 —— 猜錯就等於放錯人進來。
-//  詳見當日紀錄。）
+// ---------------------------------------------------------------
+// ⚠️ 雙語排版慣例：**英文一行、中文一行，英文在上**
+// ---------------------------------------------------------------
+// 這一頁**不要**再用「中文 / English」斜線串成一行的寫法（使用者 2026-10-13 指定）。
+// 標題區本來就是英文在上、中文在下，全頁統一成同一種節奏：
+//
+//     英文句子
+//     中文句子
+//
+// 唯一做不到的地方是 `<select>` 的 `<option>`：HTML 的 option 只能是一段純文字，
+// **無法換行**，所以下拉選項仍維持原 Google 表單的「中文 / English」寫法。
+// 那是規格限制，不是漏改；要改只能整個換成自訂 listbox（不建議，會失去原生
+// 下拉的鍵盤操作與手機體驗）。
 //
 // ---------------------------------------------------------------
 // ⚠️ 篩選結果**刻意不存**（使用者明確決定）
@@ -61,6 +70,9 @@ import { H1_PAGE, H2_PAGE } from '@/lib/headingSizes';
 // 理由是資訊表本身就會說明流程與時長，這裡先講一次既重複，
 // 又等於讓還沒同意的人先讀到簡化版的流程說明。
 // （也避免下游的文字偵測器把這裡的敘述誤判成同意書內容。）
+//
+// ⚠️ 而且這張卡**在「不符合」時完全不顯示** —— 已經被擋掉的人不需要知道
+//    符合的話會發生什麼事，那只會讓人以為自己還有機會。
 
 interface EligibilityScreeningProps {
   /** 參與者確認符合資格時呼叫。 */
@@ -98,23 +110,34 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
   const eligible = ageOk && ageConfirmOk && uniConfirmOk && uniChosen;
 
   // 不符合時具體說出是哪一項不符合，讓參與者知道原因（不要只丟一句「你不符合」）。
+  // ⚠️ 存成 { en, zh } 而不是一行字串，因為畫面上要分成兩行（英文在上）。
   const rejectReasons = useMemo(() => {
-    const reasons: string[] = [];
+    const reasons: { en: string; zh: string }[] = [];
     if (selectedAge && !selectedAge.eligible) {
-      reasons.push('這項研究的招募年齡是 16–30 歲。/ This study recruits participants aged 16–30.');
+      reasons.push({
+        en: 'This study recruits participants aged 16–30.',
+        zh: '這項研究的招募年齡是 16–30 歲。',
+      });
     }
     if (ageRejected && selectedAge?.eligible) {
-      reasons.push(
-        '你在年齡確認一題選了「否，我不符合」。/ You selected "No" on the age confirmation.',
-      );
+      reasons.push({
+        en: 'You selected "No" on the age confirmation.',
+        zh: '你在年齡確認一題選了「否，我不符合」。',
+      });
     }
     if (uniRejected) {
-      reasons.push(
-        '你在院校確認一題選了「否，我不符合」。本研究只招募現正就讀香港大學的學生。/ You selected "No" on the university confirmation. This study only recruits current university students in Hong Kong.',
-      );
+      reasons.push({
+        en: 'You selected "No" on the university confirmation. This study only recruits current university students in Hong Kong.',
+        zh: '你在院校確認一題選了「否，我不符合」。本研究只招募現正就讀香港大學的學生。',
+      });
     }
     return reasons;
   }, [selectedAge, ageRejected, uniRejected]);
+
+  // 是否已經確定「不符合」。這一件事同時決定兩張卡的顯示：
+  //   * 顯示「很抱歉…」說明
+  //   * **不要**顯示「接下來 / What happens next」（被擋掉的人不需要知道後續流程）
+  const rejected = allAnswered && !eligible && rejectReasons.length > 0;
 
   // ⚠️ 只在「真的符合」時才觸發，而且 useAutoAdvance 內部保證只排程一次。
   //    不符合的人**永遠不會**被帶進下一步 —— 這與原 Google 表單的跳轉行為一致。
@@ -165,8 +188,10 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
         <QuestionCard
           en="What is your age?"
           zh="你的年齡是？"
-          hint="本研究招募 16–30 歲的參加者。/ This study recruits participants aged 16–30."
+          hintEn="This study recruits participants aged 16–30."
+          hintZh="本研究招募 16–30 歲的參加者。"
         >
+          {/* ⚠️ option 無法換行，所以選項仍是「中文 / English」（見檔頭說明）。 */}
           <select
             value={ageBand}
             onChange={(e) => setAgeBand(e.target.value)}
@@ -186,7 +211,8 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
         <QuestionCard
           en="Confirmation: Are you between 16 and 30 years old?"
           zh="確認：你是否介乎 16 至 30 歲？"
-          hint="請再次確認。本研究只接受 16–30 歲的參加者。/ Please confirm. This study only accepts participants aged 16–30."
+          hintEn="Please confirm. This study only accepts participants aged 16–30."
+          hintZh="請再次確認。本研究只接受 16–30 歲的參加者。"
         >
           <ConfirmRadios
             name="age-confirm"
@@ -200,7 +226,8 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
         <QuestionCard
           en="Which university do you attend?"
           zh="你就讀哪一所大學？"
-          hint='請選擇你就讀的院校。若你的院校不在名單上，或你並非就讀香港的大學，請選「其他」。/ Please select your institution. If your institution is not listed, or you do not study at a university in Hong Kong, please choose "Other".'
+          hintEn={'Please select your institution. If your institution is not listed, or you do not study at a university in Hong Kong, please choose "Other".'}
+          hintZh="請選擇你就讀的院校。若你的院校不在名單上，或你並非就讀香港的大學，請選「其他」。"
         >
           <select
             value={university}
@@ -219,10 +246,12 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
           {/* 選「其他」時多提醒一次 —— 原表單的題目說明有寫，但下拉選單裡看不到。 */}
           {university === OTHER_UNIVERSITY && (
             <p className="text-[#8a8a8a] text-[11px] mt-2 leading-relaxed">
-              若你並非就讀香港的大學，請在下一題選「否，我不符合」。
               <span className="block">
                 If you do not study at a university in Hong Kong, please select &ldquo;No&rdquo;
                 on the next question.
+              </span>
+              <span className="block">
+                若你並非就讀香港的大學，請在下一題選「否，我不符合」。
               </span>
             </p>
           )}
@@ -232,7 +261,8 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
         <QuestionCard
           en="Confirmation: Are you currently a university student in Hong Kong?"
           zh="確認：你是否現正就讀香港的大學？"
-          hint='若你就讀的院校不在名單上，或你並非就讀香港的大學，請選「否」。/ If your institution was not listed, or you do not study at a university in Hong Kong, please choose "No".'
+          hintEn={'If your institution was not listed, or you do not study at a university in Hong Kong, please choose "No".'}
+          hintZh="若你就讀的院校不在名單上，或你並非就讀香港的大學，請選「否」。"
         >
           <ConfirmRadios
             name="uni-confirm"
@@ -245,8 +275,9 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
 
       {/* ---------- 不符合資格的說明 ----------
           ⚠️ 不符合的人**看不到繼續按鈕**（下面那顆只在 eligible 時出現），
-             所以這一塊是他們唯一會看到的「結果」，必須講清楚原因與下一步。 */}
-      {allAnswered && !eligible && rejectReasons.length > 0 && (
+             所以這一塊是他們唯一會看到的「結果」，必須講清楚原因與下一步。
+          ⚠️ 出現這一塊時，「接下來」那張卡**不顯示**（見上面 rejected 的說明）。 */}
+      {rejected && (
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -254,19 +285,23 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
           role="status"
         >
           <p className="text-[#EAECEF] text-sm font-medium mb-2">
-            很抱歉，你暫時不符合本研究的參與資格。
+            <span className="block">We are sorry — you are not currently eligible to take part in this study.</span>
+            <span className="block">很抱歉，你暫時不符合本研究的參與資格。</span>
           </p>
-          <ul className="text-[#9a9a9a] text-xs leading-relaxed list-disc pl-5 space-y-1">
+          <ul className="text-[#9a9a9a] text-xs leading-relaxed list-disc pl-5 space-y-2">
             {rejectReasons.map((r, i) => (
-              <li key={i}>{r}</li>
+              <li key={i}>
+                <span className="block">{r.en}</span>
+                <span className="block">{r.zh}</span>
+              </li>
             ))}
           </ul>
           <p className="text-[#8a8a8a] text-xs mt-3 leading-relaxed">
-            感謝你的時間與興趣。你不需要繼續，可以直接關閉這個頁面。
-          </p>
-          <p className="text-[#8a8a8a] text-[11px] mt-1 leading-relaxed">
-            Thank you for your time and interest. There is no need to continue — you may close
-            this page.
+            <span className="block">
+              Thank you for your time and interest. There is no need to continue — you may
+              close this page.
+            </span>
+            <span className="block">感謝你的時間與興趣。你不需要繼續，可以直接關閉這個頁面。</span>
           </p>
         </motion.div>
       )}
@@ -292,32 +327,41 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
             <span className="text-xs opacity-70 font-normal">繼續</span>
           </motion.button>
           <p className="text-[#8a8a8a] text-xs text-center max-w-md">
-            你符合參與資格，將自動前往下一步。
-            <span className="block mt-0.5">You are eligible — continuing automatically.</span>
+            <span className="block">You are eligible — continuing automatically.</span>
+            <span className="block">你符合參與資格，將自動前往下一步。</span>
           </p>
         </motion.div>
       )}
 
       {/* 「接下來」說明。
-          ⚠️ 刻意不寫出資訊表／同意書的名稱，理由見檔頭。 */}
-      <motion.div
-        initial={{ opacity: 0 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true }}
-        transition={{ delay: 0.3 }}
-        className="w-full max-w-3xl mt-10 glass-card p-5"
-      >
-        <p className="text-[#EAECEF] text-sm font-medium mb-2">接下來 / What happens next</p>
-        <p className="text-[#9a9a9a] text-xs leading-relaxed">
-          若你符合資格，還有 3 個部分要完成：研究說明與同意、問卷、以及影片觀看。
-          完整細節與所需時間會在下一個部分說明。
-        </p>
-        <p className="text-[#8a8a8a] text-[11px] mt-2 leading-relaxed">
-          If you are eligible, there are 3 more parts: information and consent, the
-          questionnaires, and the video viewing. Full details and timings are given in the
-          next part.
-        </p>
-      </motion.div>
+          ⚠️ 刻意不寫出資訊表／同意書的名稱，理由見檔頭。
+          ⚠️ **不符合時整張卡不渲染**（rejected）—— 已經被擋掉的人不需要知道
+             符合的話會發生什麼事。 */}
+      {!rejected && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.3 }}
+          className="w-full max-w-3xl mt-10 glass-card p-5"
+        >
+          <p className="text-[#EAECEF] text-sm font-medium mb-2">
+            <span className="block">What happens next</span>
+            <span className="block">接下來</span>
+          </p>
+          <p className="text-[#9a9a9a] text-xs leading-relaxed">
+            <span className="block">
+              If you are eligible, there are 3 more parts: information and consent, the
+              questionnaires, and the video viewing. Full details and timings are given in the
+              next part.
+            </span>
+            <span className="block">
+              若你符合資格，還有 3 個部分要完成：研究說明與同意、問卷、以及影片觀看。
+              完整細節與所需時間會在下一個部分說明。
+            </span>
+          </p>
+        </motion.div>
+      )}
     </div>
   );
 }
@@ -328,21 +372,30 @@ export default function EligibilityScreening({ onContinue }: EligibilityScreenin
 /* ------------------------------------------------------------------ */
 
 interface QuestionCardProps {
-  /** 英文題目。 */
+  /** 英文題目（顯示在上面）。 */
   en: string;
-  /** 中文題目。 */
+  /** 中文題目（顯示在下面）。 */
   zh: string;
-  /** 題目說明（雙語，斜線分隔）。 */
-  hint: string;
+  /** 英文題目說明（顯示在上面）。 */
+  hintEn: string;
+  /** 中文題目說明（顯示在下面）。 */
+  hintZh: string;
   children: React.ReactNode;
 }
 
-function QuestionCard({ en, zh, hint, children }: QuestionCardProps) {
+/**
+ * 一題一張卡：英文題目 → 中文題目 → 英文說明 → 中文說明 → 作答區。
+ * ⚠️ 四行順序固定（英文一律在上），不要改回「中文 / English」斜線串一行。
+ */
+function QuestionCard({ en, zh, hintEn, hintZh, children }: QuestionCardProps) {
   return (
     <div className="glass-card p-5">
       <p className="text-[#FFFFFF] text-sm font-medium leading-snug">{en}</p>
       <p className="text-[#EAECEF] text-xs mt-0.5 mb-2">{zh}</p>
-      <p className="text-[#8a8a8a] text-[11px] leading-relaxed mb-3">{hint}</p>
+      <p className="text-[#8a8a8a] text-[11px] leading-relaxed mb-3">
+        <span className="block">{hintEn}</span>
+        <span className="block">{hintZh}</span>
+      </p>
       {children}
     </div>
   );
@@ -368,6 +421,7 @@ function ConfirmRadios({ name, value, onChange, groupLabel }: ConfirmRadiosProps
     <div className="flex flex-col gap-2" role="radiogroup" aria-label={groupLabel}>
       {[CONFIRM_YES, CONFIRM_NO].map((opt) => {
         const checked = value === opt;
+        const { en, zh } = splitBilingual(opt);
         return (
           <label
             key={opt}
@@ -380,15 +434,34 @@ function ConfirmRadios({ name, value, onChange, groupLabel }: ConfirmRadiosProps
             <input
               type="radio"
               name={name}
+              // ⚠️ value 仍是**完整**的 CONFIRM_* 字串（含斜線），
+              //    因為資格判斷比對的是它；只有「顯示」被拆成兩行。
               value={opt}
               checked={checked}
               onChange={() => onChange(opt)}
               className="mt-1 shrink-0 accent-[#C6A8F8]"
             />
-            <span className="text-[#EAECEF] text-xs leading-relaxed">{opt}</span>
+            <span className="text-[#EAECEF] text-xs leading-relaxed">
+              {en && <span className="block">{en}</span>}
+              <span className="block">{zh}</span>
+            </span>
           </label>
         );
       })}
     </div>
   );
+}
+
+/**
+ * 把 `中文 / English` 拆成兩半，讓畫面能分成兩行顯示（英文在上）。
+ *
+ * ⚠️ `CONFIRM_YES` / `CONFIRM_NO` 這兩個常數**刻意保持原 Google 表單的
+ *    「中文 / English」寫法**，因為它們要能被拿去跟表單逐字核對
+ *    （論文附錄、`verify-screening-step.mjs` 都在比對這個字串）。
+ *    所以拆行只發生在顯示層，不動資料本身。
+ */
+function splitBilingual(text: string): { en: string; zh: string } {
+  const idx = text.indexOf(' / ');
+  if (idx === -1) return { en: '', zh: text };
+  return { zh: text.slice(0, idx), en: text.slice(idx + 3) };
 }

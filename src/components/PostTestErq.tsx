@@ -22,6 +22,10 @@ interface PostTestErqProps {
 // 真正要分析的是前後測的差距／穩定性，所以兩份的題目與順序必須完全一致。
 //
 // ⚠️ 題號沿用 ERQ 原始編號（1/3/5/7/8/10），不可重新編號，理由見 PreTestErq.tsx。
+//
+// ⚠️ 畫面上**刻意不寫出「情緒調節問卷 / Emotion Regulation Questionnaire」**，
+//    只叫「後測問卷（三）」。理由與前測完全相同（避免提示研究假設、與表單標題一致），
+//    詳見 PreTestErq.tsx 檔頭的說明。**不要把描述性名稱改回來。**
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSf4dqWthqMj6ZaZk0FVltBMCmi6GM_cqpT-bosuB8iU03z-Fg/viewform?embedded=true';
 
@@ -59,10 +63,10 @@ export default function PostTestErq({ submitted = false, onSubmitted }: PostTest
         className="text-center mb-10"
       >
         <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>
-          Emotion Regulation Questionnaire
+          Post-Test Questionnaire (3)
         </h1>
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>
-          情緒調節問卷（認知重評）
+          後測問卷（三）
         </h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
@@ -85,7 +89,7 @@ export default function PostTestErq({ submitted = false, onSubmitted }: PostTest
         <GoogleFormEmbed
           src={src}
           height={formHeight}
-          title="Emotion Regulation Questionnaire (Post-Viewing)"
+          title="Post-Test Questionnaire 3"
           onSubmitted={onSubmitted}
         />
       </div>

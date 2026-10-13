@@ -124,5 +124,14 @@ export const infoSheetItems: DocxItem[] = [
  * on this side and can be diffed against the sheet text in review. If the site ever
  * changes how many forms a phase renders, update both the sheet text above (the
  * "CD-RISC-10, MLQ and ERQ" sentence) and `LABELS` in PreTest.tsx / PostTest.tsx.
+ *
+ * ⚠️ What the two sides deliberately do NOT share is the *wording*.
+ * The sheet names the instruments, because informed consent has to tell people
+ * what they are being asked to do. The questionnaire pages are numbered instead
+ * ("前測問卷（三）" / "後測問卷（三）") and never say ERQ or "emotion regulation",
+ * so that the page a participant is answering does not announce which construct
+ * is being measured while they are answering it. That asymmetry is intentional —
+ * see the header of PreTestErq.tsx. Do not "align" the two by making the page
+ * labels descriptive.
  */
 export const INFO_SHEET_PER_PHASE = 3;

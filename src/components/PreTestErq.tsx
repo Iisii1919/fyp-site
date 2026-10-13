@@ -25,6 +25,19 @@ interface PreTestErqProps {
 // ⚠️ 題目順序不可打亂：Gross & John (2003) 的 ERQ 原本是重評與抑制題混排、
 // 交替出現，本站只取重評子量表，因此正確的題號是 1/3/5/7/8/10，
 // 表單裡已經沿用原始題號，切勿重新編號（重編會讓分析時對不回原始量表）。
+//
+// ---------------------------------------------------------------
+// ⚠️ 畫面上**刻意不寫出「情緒調節問卷 / Emotion Regulation Questionnaire」**
+// ---------------------------------------------------------------
+// 這一頁的標題只叫「前測問卷（三）」，與 PreTest1 / PreTest2 連號。
+// 這不是漏寫，是刻意的：
+//   1. 直接告訴參與者「我們在量你的情緒調節策略」等於把研究假設講出來。
+//      參與者知道在量什麼之後可能順著調整作答（demand characteristics），
+//      而這份量表量的正是**穩定傾向**，被提示後最容易受影響 ——
+//      一旦作答被影響，前後測的比較也就失去意義。
+//   2. 與 Google 表單本身的標題一致：表單叫「觀前問卷3 Pre-Viewing Questionnaire3」，
+//      網站寫成「前測問卷（三）」才對得起來。
+//   → **不要把描述性名稱改回來。** 要知道這份是 ERQ，看這段註解就夠了。
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSeeFbUWQOaH48D-HQ2VfbO7526s52gnZbOF61vhiAjX3xgIaw/viewform?embedded=true';
 
@@ -62,10 +75,10 @@ export default function PreTestErq({ submitted = false, onSubmitted }: PreTestEr
         className="text-center mb-10"
       >
         <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>
-          Emotion Regulation Questionnaire
+          Pre-Test Questionnaire (3)
         </h1>
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>
-          情緒調節問卷（認知重評）
+          前測問卷（三）
         </h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
@@ -88,7 +101,7 @@ export default function PreTestErq({ submitted = false, onSubmitted }: PreTestEr
         <GoogleFormEmbed
           src={src}
           height={formHeight}
-          title="Emotion Regulation Questionnaire (Pre-Viewing)"
+          title="Pre-Test Questionnaire 3"
           onSubmitted={onSubmitted}
         />
       </div>

@@ -8,7 +8,7 @@ import StepFooter from './StepFooter';
 import QuestionnaireProgress from './QuestionnaireProgress';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
 
-const LABELS = ['前測問卷（一）', '前測問卷（二）', '情緒調節問卷 ERQ'];
+const LABELS = ['前測問卷（一）', '前測問卷（二）', '前測問卷（三）'];
 
 interface PreTestProps {
   /** 三份前測問卷「都」送出後，自動前往下一步。 */

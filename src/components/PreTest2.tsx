@@ -76,7 +76,7 @@ export default function PreTest2({ submitted = false, onSubmitted }: PreTest2Pro
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
-        提交後，請繼續填寫最後一份問卷（情緒調節問卷）。
+        提交後，請繼續填寫最後一份問卷：前測問卷（三）。
       </p>
     </div>
   );

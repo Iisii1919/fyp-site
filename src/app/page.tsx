@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import Hero from '@/components/Hero';
+import EligibilityScreening from '@/components/EligibilityScreening';
 import InformedConsent from '@/components/InformedConsent';
 import ConsentSignature from '@/components/ConsentSignature';
 import PreTest from '@/components/PreTest';
@@ -18,22 +19,26 @@ import { ParticipantProvider, clearParticipant } from '@/lib/participant';
 import { readProgress, saveProgress } from '@/lib/progress';
 import { useResearcherEscape } from '@/lib/useResearcherEscape';
 
-// 步驟重編（合併兩份前測 + 兩份後測 → 各一頁）：12 → 10
+// 步驟重編：原 10 步 → 11 步（2026-10-13 在最前面插入招募資格篩選）
 //  0 Hero
-//  1 InformedConsent
-//  2 ConsentSignature
-//  3 PreTest       （前測 1 + 前測 2）
-//  4 GroupGate
-//  5 VideoViewer
-//  6 PostViewFeedback
-//  7 分隔頁「感謝你的回饋」
-//  8 PostTest      （後測 1 + 後測 2）
-//  9 ThankYou
-const TOTAL_STEPS = 10;
+//  1 EligibilityScreening （⚠️ 2026-10-13 新增：招募資格篩選，排在同意書之前）
+//  2 InformedConsent      （研究資訊表）
+//  3 ConsentSignature     （同意書）
+//  4 PreTest              （前測 1 + 前測 2 + ERQ）
+//  5 GroupGate
+//  6 VideoViewer
+//  7 PostViewFeedback
+//  8 分隔頁「感謝你的回饋」
+//  9 PostTest             （後測 1 + 後測 2 + ERQ）
+//  10 ThankYou
+const TOTAL_STEPS = 11;
 
 // 給「接續上次進度」提示用的步驟名稱，順序要跟上面的步驟表一致。
+// ⚠️ 長度必須等於 TOTAL_STEPS，且**每一項要對到正確的步驟編號**，
+//    否則接續提示會指著錯誤的頁面名稱。驗證：verify-screening-step.mjs。
 const STEP_LABELS = [
   '開始頁',
+  '資格確認',
   '研究資料',
   '同意書',
   '前測問卷',
@@ -218,32 +223,39 @@ export default function Home() {
 
         {step === 1 && (
           <section className="relative w-full no-snap">
-            <InformedConsent onAccepted={goNext} />
+            <EligibilityScreening onContinue={goNext} />
             <StepFooter />
           </section>
         )}
 
         {step === 2 && (
           <section className="relative w-full no-snap">
-            <ConsentSignature onNext={goNext} />
+            <InformedConsent onAccepted={goNext} />
             <StepFooter />
           </section>
         )}
 
         {step === 3 && (
           <section className="relative w-full no-snap">
-            <PreTest onNext={goNext} />
+            <ConsentSignature onNext={goNext} />
+            <StepFooter />
           </section>
         )}
 
         {step === 4 && (
+          <section className="relative w-full no-snap">
+            <PreTest onNext={goNext} />
+          </section>
+        )}
+
+        {step === 5 && (
           <section className="relative w-full no-snap">
             <GroupGate onContinue={goNext} />
             <StepFooter />
           </section>
         )}
 
-        {step === 5 && (
+        {step === 6 && (
           <section className="relative w-full no-snap">
             <VideoViewer
               onProgress={handleVideoProgress}
@@ -255,14 +267,14 @@ export default function Home() {
           </section>
         )}
 
-        {step === 6 && (
+        {step === 7 && (
           <section className="relative w-full no-snap">
             <PostViewFeedback onComplete={goNext} />
             <StepFooter />
           </section>
         )}
 
-        {step === 7 && (
+        {step === 8 && (
           <section
             className="relative h-screen w-full overflow-hidden no-snap flex items-center justify-center"
             style={{ background: 'radial-gradient(ellipse at center, #4a4a4a 0%, #3d3d3d 100%)' }}
@@ -306,13 +318,13 @@ export default function Home() {
           </section>
         )}
 
-        {step === 8 && (
+        {step === 9 && (
           <section className="relative w-full no-snap">
             <PostTest onNext={goNext} />
           </section>
         )}
 
-        {step === 9 && (
+        {step === 10 && (
           <section className="relative w-full no-snap">
             <ThankYou participantName="" />
             <StepFooter />

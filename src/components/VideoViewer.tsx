@@ -71,9 +71,53 @@ function parseDuration(durationStr: string): number {
   return 0;
 }
 
+// 雙擊分區：左 1/3 倒退、中間 1/3 播放暫停、右 1/3 前進（同 YouTube 手機版）。
+type TapZone = 'left' | 'center' | 'right';
+
+// 雙擊後短暫顯示的回饋圖示種類。
+type FlashKind = 'play' | 'pause' | 'forward' | 'back';
+
+// 兩次點擊要在這個時間內、且在同一區，才算雙擊。
+// ⚠️ 這個值同時是「單擊延遲」—— 太短會讓從容的雙擊被當成兩次單擊（變成播→停），
+//    太長會讓單擊感覺遲鈍。280ms 是實務上常見的折衷。
+const DOUBLE_TAP_MS = 280;
+
+/** 雙擊回饋的圖示。用 SVG 而不是 emoji，避免各平台字型差異。 */
+function FlashIcon({ kind }: { kind: FlashKind }) {
+  if (kind === 'play') {
+    return (
+      <svg className="w-9 h-9" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <path d="M8 5v14l11-7z" />
+      </svg>
+    );
+  }
+  if (kind === 'pause') {
+    return (
+      <svg className="w-9 h-9" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+        <path d="M6 5h4v14H6zM14 5h4v14h-4z" />
+      </svg>
+    );
+  }
+  // forward / back：雙箭頭 + 10（跟 YouTube 的提示一致）
+  const flip = kind === 'back';
+  return (
+    <span className="flex items-center gap-1.5">
+      <svg
+        className="w-6 h-6"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        aria-hidden
+        style={flip ? { transform: 'scaleX(-1)' } : undefined}
+      >
+        <path d="M5 6l6 6-6 6zM12 6l6 6-6 6z" />
+      </svg>
+      <span className="text-sm font-semibold tabular-nums">10</span>
+    </span>
+  );
+}
+
 // 單個全屏視頻播放器
-function VideoPlayer({
-  clip,
+function VideoPlayer({  clip,
   index,
   total,
   isCompleted,
@@ -101,8 +145,15 @@ function VideoPlayer({
   const [hoverX, setHoverX] = useState<number | null>(null);
   const [isInView, setIsInView] = useState(false);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  // 單擊播放/暫停、雙擊全屏：用短延遲區分，避免雙擊觸發兩次 play/pause
+  // 手勢：單擊播放/暫停、雙擊分區（左 -10s ／ 中 播放暫停 ／ 右 +10s）。
+  // 用短延遲區分單擊與雙擊，避免雙擊被當成兩次單擊而連續 toggle。
   const clickTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // 上一次點擊的時間與分區。**必須同一區**才算雙擊（跟 YouTube 一致）——
+  // 若不分區，使用者在左邊點一下、右邊再點一下就會被誤判成雙擊而跳 10 秒。
+  const lastTapRef = useRef<{ time: number; zone: TapZone } | null>(null);
+  // 雙擊後的視覺回饋（像 YouTube 中間浮現的播放/暫停、±10 秒圖示）。
+  const [gestureFlash, setGestureFlash] = useState<{ id: number; kind: FlashKind } | null>(null);
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const togglePlay = useCallback(() => {
     if (!videoRef.current) return;
@@ -122,21 +173,88 @@ function VideoPlayer({
     }
   }, []);
 
-  // 單擊：延遲後切換播放/暫停；雙擊：取消單擊並切換全屏
-  const handlePlayerClick = () => {
-    if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
-    clickTimerRef.current = setTimeout(() => {
-      togglePlay();
-      clickTimerRef.current = null;
-    }, 220);
-  };
+  // 顯示雙擊回饋圖示（0.6 秒後自動消失）。
+  const showFlash = useCallback((kind: FlashKind) => {
+    setGestureFlash({ id: Date.now(), kind });
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = setTimeout(() => setGestureFlash(null), 600);
+  }, []);
 
-  const handlePlayerDoubleClick = () => {
+  // 相對快進／倒退（與鍵盤左右鍵共用同樣的 10 秒與邊界處理）。
+  const seekBy = useCallback((delta: number) => {
+    const v = videoRef.current;
+    if (!v) return;
+    const total = (v.duration && isFinite(v.duration)) ? v.duration : parseDuration(clip.duration);
+    const max = total > 0 ? total : Infinity;
+    v.currentTime = Math.max(0, Math.min(max, v.currentTime + delta));
+    setCurrentTime(v.currentTime);
+  }, [clip.duration]);
+
+  /**
+   * 播放器上的所有點擊都走這裡（pointerdown），不再用 onClick / onDoubleClick。
+   *
+   * 為什麼統一在 pointerdown：
+   *   同一個手勢若同時掛 onClick 與 onPointerDown，觸控裝置會**兩邊都觸發**
+   *   （觸控會依序送出 pointerdown → click），變成一次點擊做兩件事。
+   *   收斂成單一入口就沒有這個問題，而且 pointerdown 反應更即時。
+   *
+   * 分區規則：容器寬度切成左 35% / 中 30% / 右 35%。
+   *   * 單擊（任一區）→ 播放 / 暫停（維持原本行為，最直覺）
+   *   * 雙擊中間     → 播放 / 暫停
+   *   * 雙擊右邊     → 前進 10 秒
+   *   * 雙擊左邊     → 倒退 10 秒
+   *
+   * ⚠️ 滑鼠的雙擊**維持原本的全螢幕**（桌面版 YouTube 的慣例），
+   *    分區手勢只在觸控裝置啟用。使用者明確擔心電腦版行為被改掉。
+   */
+  const handlePlayerPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    if (rect.width <= 0) return;
+    const frac = (e.clientX - rect.left) / rect.width;
+    const zone: TapZone = frac < 0.35 ? 'left' : frac > 0.65 ? 'right' : 'center';
+    const isTouch = e.pointerType !== 'mouse';
+    const now = Date.now();
+    const last = lastTapRef.current;
+    const isDouble = !!last && now - last.time < DOUBLE_TAP_MS && last.zone === zone;
+
     if (clickTimerRef.current) {
       clearTimeout(clickTimerRef.current);
       clickTimerRef.current = null;
     }
-    toggleFullscreen();
+
+    if (isDouble) {
+      lastTapRef.current = null;
+
+      // 滑鼠：雙擊 = 全螢幕（桌面慣例，維持不變）
+      if (!isTouch) {
+        toggleFullscreen();
+        return;
+      }
+
+      if (zone === 'center') {
+        const v = videoRef.current;
+        if (!v) return;
+        const willPause = !v.paused;
+        if (willPause) v.pause();
+        else v.play().catch(() => {});
+        showFlash(willPause ? 'pause' : 'play');
+      } else if (zone === 'right') {
+        seekBy(10);
+        showFlash('forward');
+      } else {
+        seekBy(-10);
+        showFlash('back');
+      }
+      return;
+    }
+
+    // 第一次點擊：先記下來，若在 DOUBLE_TAP_MS 內沒有第二次才當成單擊。
+    lastTapRef.current = { time: now, zone };
+    clickTimerRef.current = setTimeout(() => {
+      clickTimerRef.current = null;
+      lastTapRef.current = null;
+      togglePlay();
+    }, DOUBLE_TAP_MS);
   };
 
   const handleEnded = useCallback(() => {
@@ -236,6 +354,17 @@ function VideoPlayer({
     return () => document.removeEventListener('fullscreenchange', handleFsChange);
   }, []);
 
+  // 元件卸載時清掉手勢計時器。
+  // ⚠️ 一定要清：單擊是延遲 280ms 才執行 togglePlay，若參與者在這段時間內
+  //    捲動離開／跳頁，殘留的 timer 會在已卸載的元件上呼叫 play()/pause()。
+  useEffect(
+    () => () => {
+      if (clickTimerRef.current) { clearTimeout(clickTimerRef.current); clickTimerRef.current = null; }
+      if (flashTimerRef.current) { clearTimeout(flashTimerRef.current); flashTimerRef.current = null; }
+    },
+    [],
+  );
+
   // 監聽本視頻是否進入視圖（僅當前可見的視頻才響應鍵盤左右鍵）
   useEffect(() => {
     const el = containerRef.current;
@@ -294,6 +423,10 @@ function VideoPlayer({
           style={{ background: 'linear-gradient(transparent, rgba(0,0,0,0.85))' }}
           onMouseMove={(e) => e.stopPropagation()}
           onClick={(e) => e.stopPropagation()}
+          // ⚠️ 一定要擋 pointerdown：播放器容器是用 pointerdown 判斷手勢的，
+          //    只擋 onClick 的話，點「播放」按鈕會**同時**觸發容器的手勢邏輯，
+          //    變成按下按鈕後又排了一次 toggle → 播放後立刻被暫停。
+          onPointerDown={(e) => e.stopPropagation()}
         >
           {/* 進度條 */}
           <div
@@ -427,8 +560,9 @@ function VideoPlayer({
       }}
       onMouseMove={handleMouseMove}
       onMouseLeave={() => isPlaying && setShowControls(false)}
-      onClick={handlePlayerClick}
-      onDoubleClick={handlePlayerDoubleClick}
+      // 所有點擊（單擊／雙擊、觸控／滑鼠）都收斂到這一個 handler，
+      // 理由見 handlePlayerPointerDown 的說明。
+      onPointerDown={handlePlayerPointerDown}
     >
       <div className="relative w-full">
         <video
@@ -446,6 +580,28 @@ function VideoPlayer({
         />
 
       </div>
+
+      {/* 雙擊回饋（YouTube 風格）：中間浮現播放／暫停，兩側浮現 ±10 秒。
+          pointer-events-none 是必要的 —— 否則這個覆蓋層會吃掉第二次點擊，
+          雙擊就永遠偵測不到。 */}
+      {gestureFlash && (
+        <motion.div
+          key={gestureFlash.id}
+          initial={{ opacity: 0, scale: 0.8 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.15 }}
+          className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+        >
+          <div
+            className={`flex items-center justify-center rounded-full ${gestureFlash.kind === 'forward' || gestureFlash.kind === 'back' ? 'px-5 py-3' : 'w-20 h-20'}`}
+            style={{ background: 'rgba(0,0,0,0.6)', color: '#FFFFFF' }}
+          >
+            <FlashIcon kind={gestureFlash.kind} />
+          </div>
+        </motion.div>
+      )}
+
       {controlsEl}
     </motion.div>
   );

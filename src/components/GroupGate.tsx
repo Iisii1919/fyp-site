@@ -40,35 +40,73 @@ export default function GroupGate({ onContinue }: GroupGateProps) {
               <span className="text-[#EAECEF] text-xs font-mono">{participant.id}</span>
             </div>
 
-            {/* 耳機提示：影片有聲音，先提醒參與者戴耳機（剪影圖示 + 中英文字）。
-                放在按鈕正上方，因為參與者按下按鈕前一定會看到這裡。 */}
-            <motion.div
-              initial={{ opacity: 0, y: 12 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: 0.4, duration: 0.7 }}
-              className="flex items-center gap-3 px-5 py-3.5 rounded-2xl mb-8 max-w-md mx-auto text-left"
-              style={{ background: 'rgba(198,168,248,0.10)', border: '1px solid rgba(198,168,248,0.32)' }}
-            >
-              <svg
-                className="w-8 h-8 shrink-0"
-                viewBox="0 0 24 24"
-                style={{ color: '#C6A8F8' }}
-                role="img"
-                aria-label="Headphones"
+            {/* 觀影前的兩個提醒：耳機 + Wi-Fi。
+                ⚠️ 兩張卡刻意長得一樣（同色系、同尺寸），讓它們讀起來是一組提醒，
+                   而不是一張警告加一張說明。
+                ⚠️ Wi-Fi 那張不是客套話：8 支片段合計 1.6–1.9 GB（2026-10-13 實測），
+                   用行動數據看完一支片就會吃掉大半個月的流量。
+                   所以文案要講「為什麼」，不要只寫「請用 Wi-Fi」。 */}
+            <div className="flex flex-col gap-3 max-w-md mx-auto mb-8">
+              {/* 耳機提示：影片有聲音，先提醒參與者戴耳機（剪影圖示 + 中英文字）。
+                  放在按鈕正上方，因為參與者按下按鈕前一定會看到這裡。 */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.4, duration: 0.7 }}
+                className="flex items-center gap-3 px-5 py-3.5 rounded-2xl text-left"
+                style={{ background: 'rgba(198,168,248,0.10)', border: '1px solid rgba(198,168,248,0.32)' }}
               >
-                {/* 耳機剪影：粗頭帶（描邊）＋ 兩側實心耳罩 */}
-                <path d="M3.5 14.5V12a8.5 8.5 0 0 1 17 0v2.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
-                <rect x="1.5" y="13.5" width="5" height="8" rx="2.5" fill="currentColor" />
-                <rect x="17.5" y="13.5" width="5" height="8" rx="2.5" fill="currentColor" />
-              </svg>
-              <span className="leading-snug">
-                <span className="block text-[#EAECEF] text-sm font-medium">戴上耳機，效果更佳</span>
-                <span className="block text-[#9a9a9a] text-xs mt-1">
-                  Headphones recommended for the best experience
+                <svg
+                  className="w-8 h-8 shrink-0"
+                  viewBox="0 0 24 24"
+                  style={{ color: '#C6A8F8' }}
+                  role="img"
+                  aria-label="Headphones"
+                >
+                  {/* 耳機剪影：粗頭帶（描邊）＋ 兩側實心耳罩 */}
+                  <path d="M3.5 14.5V12a8.5 8.5 0 0 1 17 0v2.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" />
+                  <rect x="1.5" y="13.5" width="5" height="8" rx="2.5" fill="currentColor" />
+                  <rect x="17.5" y="13.5" width="5" height="8" rx="2.5" fill="currentColor" />
+                </svg>
+                <span className="leading-snug">
+                  <span className="block text-[#EAECEF] text-sm font-medium">戴上耳機，效果更佳</span>
+                  <span className="block text-[#9a9a9a] text-xs mt-1">
+                    Headphones recommended for the best experience
+                  </span>
                 </span>
-              </span>
-            </motion.div>
+              </motion.div>
+
+              {/* Wi-Fi 提示 */}
+              <motion.div
+                initial={{ opacity: 0, y: 12 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: 0.5, duration: 0.7 }}
+                className="flex items-center gap-3 px-5 py-3.5 rounded-2xl text-left"
+                style={{ background: 'rgba(198,168,248,0.10)', border: '1px solid rgba(198,168,248,0.32)' }}
+              >
+                <svg
+                  className="w-8 h-8 shrink-0"
+                  viewBox="0 0 24 24"
+                  style={{ color: '#C6A8F8' }}
+                  role="img"
+                  aria-label="Wi-Fi"
+                >
+                  {/* Wi-Fi 剪影：三段同心弧 + 圓點 */}
+                  <path d="M4.2 9.6a11.5 11.5 0 0 1 15.6 0" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                  <path d="M7.4 13.2a7 7 0 0 1 9.2 0" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                  <path d="M10.4 16.7a2.7 2.7 0 0 1 3.2 0" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+                  <circle cx="12" cy="19.6" r="1.5" fill="currentColor" />
+                </svg>
+                <span className="leading-snug">
+                  <span className="block text-[#EAECEF] text-sm font-medium">請連接 Wi-Fi 觀看</span>
+                  <span className="block text-[#9a9a9a] text-xs mt-1">
+                    Please use Wi-Fi — the film clips are large and would use a lot of mobile data
+                  </span>
+                </span>
+              </motion.div>
+            </div>
 
             <div>
               <motion.button

@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -7,32 +6,27 @@ export const metadata: Metadata = {
   description: "Final Year Project Research Participation Website / 畢業專題研究參與網站",
 };
 
-// Typefaces used ONLY by the isolated /style-sample prototype. Declared here
-// rather than inside the sample's own layout because Next only hoists font
-// declarations from a layout that also declares <html>/<body>; declaring them
-// in the nested layout would emit them per-navigation. The variables are inert
-// everywhere — sample.css is the only stylesheet that reads them.
+// ⚠️ Do NOT re-add `next/font/google` here.
 //
-// Chosen for contrast, not fashion: an editorial serif for the display voice,
-// a neutral grotesque for reading, and a mono for the study metadata that
-// should read as instrumentation rather than prose.
+// The /style-sample prototype used to declare Fraunces, Inter and IBM Plex Mono
+// here (via next/font/google) and expose them as --ss-font-* variables. They were
+// removed for two reasons:
 //
-// Fraunces (direction 03) rather than Instrument Serif (01/02). Instrument
-// Serif is a high-contrast Didone — elegant, but it reads as fashion editorial
-// and it is cold at large sizes, which is exactly the note the earlier
-// directions were criticised for. Fraunces is a soft "old-style" face with
-// optical sizing and the SOFT / WONK axes; at a display size it reads as
-// printed ink. `axes` is required for Fraunces because it is a variable font
-// on more than the weight axis — without it the SOFT/WONK settings in
-// sample.css are silently ignored.
-const ssDisplay = Fraunces({
-  subsets: ["latin"],
-  display: "swap",
-  variable: "--ss-font-display",
-  axes: ["SOFT", "WONK"],
-});
-const ssSans = Inter({ subsets: ["latin"], display: "swap", variable: "--ss-font-sans" });
-const ssMono = IBM_Plex_Mono({ subsets: ["latin"], weight: ["400", "500"], display: "swap", variable: "--ss-font-mono" });
+//   1. They made the DEV SERVER fetch fonts from Google on every start. next/font
+//      downloads and self-hosts font files at build/dev time, so the Node process
+//      itself makes an outbound request (Google serves them via
+//      redirector.gvt1.com). That request is what the sandbox kept stopping to ask
+//      about — the browser never caused it, because the site's own fonts come from
+//      the CSS @import at the top of globals.css, which the BROWSER fetches.
+//   2. They cost every visitor three font families that only the unused prototype
+//      reads. The study site itself uses Playfair Display + Inter, both already
+//      loaded by that @import.
+//
+// The prototype still renders: sample.css declares fallback stacks for the same
+// three variables. If the prototype's typography is ever wanted back, the honest
+// way is to declare the fonts inside the prototype's own layout (src/app/
+// style-sample/layout.tsx) so the study pages do not pay for them — and to accept
+// the dev-server font fetch coming back.
 
 export default function RootLayout({
   children,
@@ -41,9 +35,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`antialiased ${ssDisplay.variable} ${ssSans.variable} ${ssMono.variable}`}>
+      <body className="antialiased">
         {children}
       </body>
     </html>
   );
 }
+

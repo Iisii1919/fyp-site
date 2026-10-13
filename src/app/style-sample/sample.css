@@ -53,6 +53,22 @@
   --ss-shadow: 0 2px 4px -1px rgba(58, 44, 30, 0.06), 0 12px 28px -8px rgba(58, 44, 30, 0.13);
   --ss-shadow-lg: 0 4px 8px -2px rgba(58, 44, 30, 0.07), 0 26px 52px -14px rgba(58, 44, 30, 0.20);
 
+  /* Type stacks.
+     ⚠️ These are FALLBACKS, and they are the live values now.
+     The three families were originally declared in the ROOT layout via
+     next/font/google, which made the dev server download them from Google on
+     every start (and made every visitor fetch three families only this unused
+     prototype reads). They were removed — see the note in src/app/layout.tsx.
+     Without a definition here, `font-family: var(--ss-font-display)` would be
+     invalid and the whole prototype would collapse to the site's body font, so
+     these stacks keep the three voices distinguishable: a serif display voice,
+     a neutral sans for reading, and a mono for study metadata.
+     If next/font is ever declared again on an ancestor, its variables win
+     (they are set on <body>, which is closer than this <html> scope). */
+  --ss-font-display: Georgia, 'Times New Roman', 'Songti TC', serif;
+  --ss-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --ss-font-mono: ui-monospace, 'SF Mono', 'Cascadia Mono', Menlo, Consolas, monospace;
+
   /* Motion vocabulary */
   --ss-ease: cubic-bezier(0.22, 1, 0.36, 1);
   --ss-spring: cubic-bezier(0.34, 1.56, 0.64, 1);

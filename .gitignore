@@ -12,6 +12,8 @@
 
 # testing
 /coverage
+# 測試截圖產物：會一直變動，留在本地就好；腳本本身（test-suite/）要追蹤
+test-results/
 
 # next.js
 /.next/

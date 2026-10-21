@@ -755,6 +755,7 @@ function VideoPlayer({  clip,
           className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1.5"
         >
           <span className="text-[9px] tracking-[0.25em] uppercase text-[#9a9a9a]">Scroll for next video</span>
+          <span className="text-[9px] text-[#8a8a8a]">向下滾動觀看下一段影片</span>
           <div className="w-5 h-9 rounded-full border border-[rgba(198,168,248,0.3)] flex justify-center pt-1.5">
             <motion.div
               animate={{ y: [0, 6, 0] }}

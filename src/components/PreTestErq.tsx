@@ -112,6 +112,8 @@ export default function PreTestErq({ submitted = false, onSubmitted, onUnsubmit 
       </div>
 
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
+        There are no right or wrong answers — please answer with your first instinct.
+        <br />
         這份問卷沒有對錯，請依直覺作答即可。
       </p>
     </div>

@@ -61,6 +61,8 @@ export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) 
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
+        After submitting, you will automatically continue to the next step.
+        <br />
         提交後會自動繼續下一步。
       </p>
     </div>

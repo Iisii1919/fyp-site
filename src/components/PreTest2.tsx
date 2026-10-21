@@ -79,6 +79,8 @@ export default function PreTest2({ submitted = false, onSubmitted, onUnsubmit }:
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
+        After submitting, please continue to the final questionnaire: the Emotion Regulation Questionnaire.
+        <br />
         提交後，請繼續填寫最後一份問卷：情緒調節問卷。
       </p>
     </div>

@@ -273,7 +273,7 @@ export default function GoogleFormEmbed({
             <button
               type="button"
               onClick={() => setDismissed(true)}
-              aria-label="關閉提示"
+              aria-label="關閉提示 Dismiss"
               className="absolute top-2 right-3 text-[#b5b5b5] hover:text-[#7a7a7a] text-lg leading-none transition-colors"
             >
               ×
@@ -301,7 +301,8 @@ export default function GoogleFormEmbed({
                 className="px-5 py-2.5 rounded-xl text-sm font-semibold transition-colors"
                 style={{ background: '#d4bfff', color: '#3d3d3d' }}
               >
-                重新載入表單
+                Reload the form
+                <span className="block text-xs font-normal mt-0.5">重新載入表單</span>
               </button>
               <a
                 href={formSrc}
@@ -310,7 +311,8 @@ export default function GoogleFormEmbed({
                 className="px-5 py-2.5 rounded-xl text-sm font-medium border transition-colors"
                 style={{ borderColor: 'rgba(198,168,248,0.5)', color: '#5a4a72' }}
               >
-                在新視窗開啟表單
+                Open the form in a new window
+                <span className="block text-xs font-normal mt-0.5">在新視窗開啟表單</span>
               </a>
             </div>
 
@@ -319,7 +321,8 @@ export default function GoogleFormEmbed({
               onClick={markSubmittedManually}
               className="text-[#8a8a8a] hover:text-[#5a5a5a] text-xs underline mt-1 transition-colors"
             >
-              已在新視窗完成提交？按此繼續 →
+              Already submitted in the new window? Continue here →
+              <span className="block">已在新視窗完成提交？按此繼續 →</span>
             </button>
           </div>
         )}
@@ -331,7 +334,17 @@ export default function GoogleFormEmbed({
           onClick={handleToggle}
           className="text-[#8a8a8a] hover:text-[#d4bfff] text-xs mt-3 transition-colors"
         >
-          {collapsed ? '表單已收起 · 還沒填完？展開繼續作答' : '已遞交？收起表單並繼續'}
+          {collapsed ? (
+            <>
+              Form collapsed · Not finished yet? Expand to keep answering
+              <span className="block">表單已收起 · 還沒填完？展開繼續作答</span>
+            </>
+          ) : (
+            <>
+              Submitted? Collapse the form and continue
+              <span className="block">已遞交？收起表單並繼續</span>
+            </>
+          )}
         </button>
       )}
     </>

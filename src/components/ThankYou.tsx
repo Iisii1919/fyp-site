@@ -156,8 +156,8 @@ export default function ThankYou({ participantName }: ThankYouProps) {
         >
           {[
             { label: 'Duration', value: '20-30 min', zh: '時長' },
-            { label: 'Confidential', value: 'Anonymous', zh: '數據保密' },
-            { label: 'Contact', value: 'research@example.edu', zh: '聯絡' },
+            { label: 'Confidential', value: 'Anonymous · 匿名', zh: '數據保密' },
+            { label: 'Contact', value: 's1160702@s.eduhk.hk', zh: '聯絡' },
           ].map((item, i) => (
             <div key={i} className="text-center">
               <p className="text-[#8a8a8a] uppercase tracking-wider text-[10px]">{item.label} · {item.zh}</p>

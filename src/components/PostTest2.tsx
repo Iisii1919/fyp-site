@@ -52,10 +52,10 @@ export default function PostTest2({ submitted = false, onSubmitted, onUnsubmit }
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>後測：簡易心理彈性量表</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
-          Please complete the 10-Item Connor-Davidson Resilience Scale. This is the final questionnaire.
+          Please complete the 10-Item Connor-Davidson Resilience Scale.
         </p>
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
-          請完成簡易心理彈性量表。這是最後一份問卷。
+          請完成簡易心理彈性量表。
         </p>
 
         {/* 已提交標記：讓參與者一眼看出這份完成了沒 */}
@@ -79,6 +79,8 @@ export default function PostTest2({ submitted = false, onSubmitted, onUnsubmit }
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
+        After submitting, please continue to the final questionnaire: the Emotion Regulation Questionnaire.
+        <br />
         提交後，請繼續填寫最後一份問卷：情緒調節問卷。
       </p>
     </div>

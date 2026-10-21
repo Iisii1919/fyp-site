@@ -99,6 +99,8 @@ export default function PostTestErq({ submitted = false, onSubmitted, onUnsubmit
       </div>
 
       <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
+        This is the final questionnaire — the study ends once you complete it.
+        <br />
         這是最後一份問卷，完成後即結束本研究。
       </p>
     </div>

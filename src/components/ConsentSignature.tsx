@@ -73,6 +73,8 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
       {/* 表單下方的小提示（不擋 StepFooter）。
           表單合併成單頁後，簽名也在同一頁，所以不再有「下一頁」可以輸入姓名。 */}
       <p className="text-[#8a8a8a] text-xs mt-4 mb-24 text-center">
+        After you submit, you will automatically continue to the pre-test questionnaires — no need to press any other button.
+        <br />
         遞交後會自動繼續前往前測問卷，不需要再按其他按鈕。
       </p>
     </div>

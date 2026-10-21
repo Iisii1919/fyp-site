@@ -36,7 +36,7 @@ export default function GroupGate({ onContinue }: GroupGateProps) {
 
             {/* 只顯示參與者編號，不顯示組別 */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full mb-6" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)' }}>
-              <span className="text-[#8a8a8a] text-[10px] tracking-wider uppercase">Participant</span>
+              <span className="text-[#8a8a8a] text-[10px] tracking-wider uppercase">Participant · 參與者</span>
               <span className="text-[#EAECEF] text-xs font-mono">{participant.id}</span>
             </div>
 

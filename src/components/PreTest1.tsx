@@ -42,10 +42,10 @@ export default function PreTest1({ submitted = false, onSubmitted }: PreTest1Pro
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>前測：MLQ</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
-          Please complete the first pre-test questionnaire before watching the videos.
+          Please complete the MLQ before watching the videos.
         </p>
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
-          觀看影片前，請先完成第一份前測問卷。
+          觀看影片前，請先完成 MLQ。
         </p>
 
         {/* 已提交標記：讓參與者一眼看出這份完成了沒 */}

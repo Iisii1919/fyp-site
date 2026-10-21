@@ -42,10 +42,10 @@ export default function PostTest1({ submitted = false, onSubmitted }: PostTest1P
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>後測：MLQ</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
-          Please complete the first post-test questionnaire after watching all videos.
+          Please complete the MLQ after watching all videos.
         </p>
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
-          觀看所有影片後，請完成第一份後測問卷。
+          觀看所有影片後，請完成 MLQ。
         </p>
 
         {/* 已提交標記：讓參與者一眼看出這份完成了沒 */}

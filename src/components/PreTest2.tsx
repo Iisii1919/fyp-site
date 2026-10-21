@@ -50,10 +50,10 @@ export default function PreTest2({ submitted = false, onSubmitted }: PreTest2Pro
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>前測：CD-RISC-10</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
-          Please complete the second pre-test questionnaire before watching the videos.
+          Please complete the CD-RISC-10 before watching the videos.
         </p>
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
-          觀看影片前，請完成第二份前測問卷。
+          觀看影片前，請完成 CD-RISC-10。
         </p>
 
         {/* 已提交標記：讓參與者一眼看出這份完成了沒 */}

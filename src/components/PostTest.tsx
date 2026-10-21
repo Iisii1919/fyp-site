@@ -11,6 +11,12 @@ import { useAutoAdvance } from '@/lib/useAutoAdvance';
 // 進度小工具顯示的標籤。用**量表全名**而不是編號。
 // ⚠️ 順序要跟下面 render 的順序一致：MLQ → CD-RISC-10 → ERQ。
 const LABELS = ['生命意義感量表', '簡易心理彈性量表', '情緒調節問卷'];
+// 進度卡是中英對照的，所以英文名稱也要一起傳進去（英文顯示在上面）。
+const LABELS_EN = [
+  'Meaning in Life Questionnaire',
+  '10-Item Connor-Davidson Resilience Scale',
+  'Emotion Regulation Questionnaire',
+];
 
 interface PostTestProps {
   /** 三份後測問卷「都」送出後，自動前往完成頁。 */
@@ -30,6 +36,18 @@ export default function PostTest({ onNext }: PostTestProps) {
 
   const markDone = useCallback((index: number) => {
     setDone((prev) => (prev[index] ? prev : prev.map((d, i) => (i === index ? true : d))));
+    // 送出後把**下一份的開頭**帶到畫面上方（理由同 PreTest：要等收合動畫跑完）。
+    const next = [firstRef, secondRef, thirdRef][index + 1];
+    if (next?.current) {
+      window.setTimeout(() => {
+        next.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 750);
+    }
+  }, []);
+
+  /** 撤銷「已完成」（參與者按「展開繼續作答」時，代表剛才是誤判）。 */
+  const unmarkDone = useCallback((index: number) => {
+    setDone((prev) => (prev[index] ? prev.map((d, i) => (i === index ? false : d)) : prev));
   }, []);
 
   useEffect(() => {
@@ -44,24 +62,24 @@ export default function PostTest({ onNext }: PostTestProps) {
   return (
     <div className="w-full relative pb-36">
       <div ref={firstRef}>
-        <PostTest1 submitted={done[0]} onSubmitted={() => markDone(0)} />
+        <PostTest1 submitted={done[0]} onSubmitted={() => markDone(0)} onUnsubmit={() => unmarkDone(0)} />
       </div>
 
       <Separator />
 
       <div ref={secondRef}>
-        <PostTest2 submitted={done[1]} onSubmitted={() => markDone(1)} />
+        <PostTest2 submitted={done[1]} onSubmitted={() => markDone(1)} onUnsubmit={() => unmarkDone(1)} />
       </div>
 
       <Separator />
 
       <div ref={thirdRef}>
-        <PostTestErq submitted={done[2]} onSubmitted={() => markDone(2)} />
+        <PostTestErq submitted={done[2]} onSubmitted={() => markDone(2)} onUnsubmit={() => unmarkDone(2)} />
       </div>
 
       {/* 進度提示：讓參與者看得出還剩哪幾份沒做 */}
       <div className="w-full px-4 py-10">
-        <QuestionnaireProgress labels={LABELS} done={done} onJumpTo={jumpTo} />
+        <QuestionnaireProgress labels={LABELS} labelsEn={LABELS_EN} done={done} onJumpTo={jumpTo} />
       </div>
 
       <StepFooter />

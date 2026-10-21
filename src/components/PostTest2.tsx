@@ -14,12 +14,14 @@ interface PostTest2Props {
   submitted?: boolean;
   /** 偵測到送出時通知 PostTest。是否跳頁由 PostTest 依「三份都完成」判斷。 */
   onSubmitted?: () => void;
+  /** 參與者按「展開繼續作答」→ 撤銷「已完成」。 */
+  onUnsubmit?: () => void;
 }
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSfZEBVOQxauanG6meZdXM8-7_6iGO6wck8WeR_uDAazH7_QzA/viewform?embedded=true';
 
-export default function PostTest2({ submitted = false, onSubmitted }: PostTest2Props) {
+export default function PostTest2({ submitted = false, onSubmitted, onUnsubmit }: PostTest2Props) {
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
   // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
@@ -71,6 +73,7 @@ export default function PostTest2({ submitted = false, onSubmitted }: PostTest2P
           height={formHeight}
           title="Post-Test: CD-RISC-10"
           onSubmitted={onSubmitted}
+          onUnsubmit={onUnsubmit}
         />
       </div>
 

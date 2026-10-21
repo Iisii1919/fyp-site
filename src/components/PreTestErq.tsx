@@ -14,6 +14,8 @@ interface PreTestErqProps {
   submitted?: boolean;
   /** 偵測到送出時通知 PreTest。是否跳頁由 PreTest 依「全部完成」判斷。 */
   onSubmitted?: () => void;
+  /** 參與者按「展開繼續作答」→ 撤銷「已完成」。 */
+  onUnsubmit?: () => void;
 }
 
 // 前測 ERQ（認知重評子量表）—— 接在 PreTest2 之後。
@@ -43,7 +45,7 @@ interface PreTestErqProps {
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSeeFbUWQOaH48D-HQ2VfbO7526s52gnZbOF61vhiAjX3xgIaw/viewform?embedded=true';
 
-export default function PreTestErq({ submitted = false, onSubmitted }: PreTestErqProps) {
+export default function PreTestErq({ submitted = false, onSubmitted, onUnsubmit }: PreTestErqProps) {
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
   // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
@@ -105,6 +107,7 @@ export default function PreTestErq({ submitted = false, onSubmitted }: PreTestEr
           height={formHeight}
           title="Pre-Test: ERQ"
           onSubmitted={onSubmitted}
+          onUnsubmit={onUnsubmit}
         />
       </div>
 

@@ -14,12 +14,14 @@ interface PostTest1Props {
   submitted?: boolean;
   /** 偵測到送出時通知 PostTest。 */
   onSubmitted?: () => void;
+  /** 參與者按「展開繼續作答」→ 撤銷「已完成」。 */
+  onUnsubmit?: () => void;
 }
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSepV_Z8H_1MAGhKSCvIg3IBaIxPKmqzPpaUzuz4QaZ3XNGMcA/viewform?embedded=true';
 
-export default function PostTest1({ submitted = false, onSubmitted }: PostTest1Props) {
+export default function PostTest1({ submitted = false, onSubmitted, onUnsubmit }: PostTest1Props) {
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
   // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
@@ -63,6 +65,7 @@ export default function PostTest1({ submitted = false, onSubmitted }: PostTest1P
           height={formHeight}
           title="Post-Test: MLQ"
           onSubmitted={onSubmitted}
+          onUnsubmit={onUnsubmit}
         />
       </div>
 

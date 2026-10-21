@@ -13,6 +13,12 @@ import { useAutoAdvance } from '@/lib/useAutoAdvance';
 // ⚠️ 這裡刻意用**中文全名**（比縮寫長很多），因為進度卡是參與者最常回頭看的地方。
 //    窄螢幕會折行；若之後覺得太擠，可以只把這裡換回縮寫，不影響頁面標題。
 const LABELS = ['生命意義感量表', '簡易心理彈性量表', '情緒調節問卷'];
+// 進度卡是中英對照的，所以英文名稱也要一起傳進去（英文顯示在上面）。
+const LABELS_EN = [
+  'Meaning in Life Questionnaire',
+  '10-Item Connor-Davidson Resilience Scale',
+  'Emotion Regulation Questionnaire',
+];
 
 interface PreTestProps {
   /** 三份前測問卷「都」送出後，自動前往下一步。 */
@@ -37,6 +43,26 @@ export default function PreTest({ onNext }: PreTestProps) {
 
   const markDone = useCallback((index: number) => {
     setDone((prev) => (prev[index] ? prev : prev.map((d, i) => (i === index ? true : d))));
+    // 送出後把**下一份的開頭**帶到畫面上方。
+    // ⚠️ 一定要等收合動畫跑完（GoogleFormEmbed 的高度轉場是 600ms）再捲。
+    //    在動畫期間捲，頁面高度還在縮小，scrollIntoView 算出的目標位置會立刻過時，
+    //    結果就是「捲過頭、直接停在下一份的中間」—— 也就是使用者回報的現象。
+    const next = [firstRef, secondRef, thirdRef][index + 1];
+    if (next?.current) {
+      window.setTimeout(() => {
+        next.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 750);
+    }
+  }, []);
+
+  /**
+   * 撤銷「已完成」。
+   * 由 GoogleFormEmbed 在參與者按「展開繼續作答」時呼叫 ——
+   * 代表剛才那次「已送出」的判定是錯的（例如草稿對話框造成的重新導覽），
+   * 必須把進度改回未提交，否則問卷會永久標成做完、甚至觸發自動跳頁。
+   */
+  const unmarkDone = useCallback((index: number) => {
+    setDone((prev) => (prev[index] ? prev.map((d, i) => (i === index ? false : d)) : prev));
   }, []);
 
   // 三份都提交才排程跳轉（useAutoAdvance 內部保證只跳一次）
@@ -52,24 +78,24 @@ export default function PreTest({ onNext }: PreTestProps) {
   return (
     <div className="w-full relative pb-36">
       <div ref={firstRef}>
-        <PreTest1 submitted={done[0]} onSubmitted={() => markDone(0)} />
+        <PreTest1 submitted={done[0]} onSubmitted={() => markDone(0)} onUnsubmit={() => unmarkDone(0)} />
       </div>
 
       <Separator />
 
       <div ref={secondRef}>
-        <PreTest2 submitted={done[1]} onSubmitted={() => markDone(1)} />
+        <PreTest2 submitted={done[1]} onSubmitted={() => markDone(1)} onUnsubmit={() => unmarkDone(1)} />
       </div>
 
       <Separator />
 
       <div ref={thirdRef}>
-        <PreTestErq submitted={done[2]} onSubmitted={() => markDone(2)} />
+        <PreTestErq submitted={done[2]} onSubmitted={() => markDone(2)} onUnsubmit={() => unmarkDone(2)} />
       </div>
 
       {/* 進度提示：讓參與者看得出還剩哪幾份沒做 */}
       <div className="w-full px-4 py-10">
-        <QuestionnaireProgress labels={LABELS} done={done} onJumpTo={jumpTo} />
+        <QuestionnaireProgress labels={LABELS} labelsEn={LABELS_EN} done={done} onJumpTo={jumpTo} />
       </div>
 
       <StepFooter />

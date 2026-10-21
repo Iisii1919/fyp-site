@@ -14,6 +14,8 @@ interface PostTestErqProps {
   submitted?: boolean;
   /** 偵測到送出時通知 PostTest。是否跳頁由 PostTest 依「全部完成」判斷。 */
   onSubmitted?: () => void;
+  /** 參與者按「展開繼續作答」→ 撤銷「已完成」。 */
+  onUnsubmit?: () => void;
 }
 
 // 後測 ERQ（認知重評子量表）—— 接在 PostTest2 之後。
@@ -30,7 +32,7 @@ interface PostTestErqProps {
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSf4dqWthqMj6ZaZk0FVltBMCmi6GM_cqpT-bosuB8iU03z-Fg/viewform?embedded=true';
 
-export default function PostTestErq({ submitted = false, onSubmitted }: PostTestErqProps) {
+export default function PostTestErq({ submitted = false, onSubmitted, onUnsubmit }: PostTestErqProps) {
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
   // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
@@ -92,6 +94,7 @@ export default function PostTestErq({ submitted = false, onSubmitted }: PostTest
           height={formHeight}
           title="Post-Test: ERQ"
           onSubmitted={onSubmitted}
+          onUnsubmit={onUnsubmit}
         />
       </div>
 

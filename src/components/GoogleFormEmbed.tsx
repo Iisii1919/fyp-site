@@ -19,6 +19,11 @@ interface GoogleFormEmbedProps {
   pages?: number;
   /** 偵測到「已送出」時呼叫。只有單頁表單（pages <= 1）才會觸發，且只觸發一次。 */
   onSubmitted?: () => void;
+  /**
+   * 參與者按「展開繼續作答」時呼叫 —— 代表上一則「已送出」的判定是錯的，
+   * 父層應該把「已完成」取消掉。沒有這個，誤判就會把問卷永久標成做完。
+   */
+  onUnsubmit?: () => void;
 }
 
 // 嵌入 Google Form 的白底卡片。
@@ -35,24 +40,21 @@ interface GoogleFormEmbedProps {
 // 收合後仍提供「展開表單」按鈕，即使判斷有誤使用者也能自行復原。
 const SUBMITTED_HEIGHT = 460;
 
-// 🔴 「同一個 src 又載入一次」這個訊號**不足以證明送出**（2026-10-21 實測）。
+// 🔴 「同一個 src 又載入一次」這個訊號不完美，處理方式見下方 handleLoad 與 handleToggle。
 //
-// 實測重現：在問卷頁把 iframe 的 src 重新指一次（＝任何讓表單文件重新導覽的原因），
-// 只觸發 1 次 load，`handleLoad` 就判定「已送出」→ 高度由 3420px 收合成 460px。
-// 但表單內容仍然是題目（「觀前問卷3 … 1 = Strongly Disagree」），根本沒送出。
+// 背景（2026-10-21 實測）：在問卷頁把 iframe 的 src 重新指一次（＝任何讓表單文件
+// 重新導覽的原因），只觸發 1 次 load，就會被判定「已送出」→ 高度由 3420px 收合成 460px，
+// 但表單內容仍然是題目。真實會踩到的情況：Google 表單載入時若偵測到上次的草稿，
+// 會跳「繼續使用目前的草稿？」對話框；參與者按下之後表單會重新導覽一次。
 //
-// 真實會踩到的情況：Google 表單載入時若偵測到上次的草稿，會跳
-// 「繼續使用目前的草稿？」對話框；參與者按下之後，**表單文件會重新導覽一次**，
-// 於是被誤判成送出 → 表單瞬間縮成 460px，3000 多 px 的題目塞在小框裡
-// （使用者看到的就是「縮小變成內頁捲動」），而且 progress 會被標成已完成、
-// 甚至自動跳頁 → **直接損失一整份問卷的作答**。
+// ⚠️ 曾經用「時間守門」（8 秒內的重新載入不算送出）來擋，**結果誤傷正常提交**：
+//    使用者在 8 秒內填完並送出，也被當成草稿重新載入 → 表單不收合、進度顯示未提交。
+//    時間門檻無法區分這兩件事，所以**不再用時間判斷**。
 //
-// 所以再加一道**時間守門**：草稿對話框是在載入後幾秒內被按掉的，
-// 而真的填完一份問卷不可能這麼快。兩次 load 相隔太近就不算送出。
-//
-// ⚠️ 這是啟發式判斷，不是證明。刻意偏保守：漏判（真的送出卻沒收合）只是
-//    參與者要自己按「已遞交？」收合；誤判則會吃掉資料。兩害相權取其輕。
-const MIN_FILL_MS = 8000;
+// ✅ 現在的做法：**照樣立刻判定送出，但讓它可以撤銷**。
+//    按下方「表單已收起 · 還沒填完？展開繼續作答」時，除了展開，
+//    也會呼叫 `onUnsubmit` 讓父層把「已完成」取消掉。
+//    → 誤判的代價從「資料被標成完成、可能跳頁」降成「按一下展開就好」。
 
 // ⚠️ 載入失敗的救援機制（2026-09-13 新增）
 //
@@ -84,20 +86,40 @@ const LOAD_TIMEOUT_MS = 15000;
 /** 探測請求自己的上限。逾時只代表「不知道」，不能當成連不上。 */
 const PROBE_TIMEOUT_MS = 10000;
 
+/**
+ * 確保 Google 表單網址帶 `hl=en`，讓介面文字（提交／必填／繼續）固定是英文。
+ *
+ * 為什麼需要：Google 表單的介面語言**跟隨表單本身的語言，不跟隨瀏覽者**。
+ * 2026-10-21 實測：把瀏覽器 locale 設成 en-US、Accept-Language 送 en-US，
+ * 表單仍然顯示「提交」「必填」（`<html lang="zh">`）；只有網址加 `hl=en` 才會變英文。
+ * 這幾份表單是從中文帳號建立的，所以預設是中文。
+ *
+ * 加了之後**所有人一致看到英文介面**，與本站「英文在上」的雙語慣例一致，
+ * 也避免英文參與者看到雙語題目卻只有中文按鈕。
+ *
+ * ⚠️ 已經有 `hl=` 的網址不動（尊重呼叫端）。
+ */
+function ensureEnglishUI(src: string): string {
+  if (!src) return src;
+  if (/[?&]hl=/.test(src)) return src;
+  return src.includes('?') ? `${src}&hl=en` : `${src}?hl=en`;
+}
+
 export default function GoogleFormEmbed({
   src,
   height,
   title,
   pages = 1,
   onSubmitted,
+  onUnsubmit,
 }: GoogleFormEmbedProps) {
+  // 一律走這個（已補 hl=en），下面所有地方都用它，確保 src 比較與 iframe 一致。
+  const formSrc = ensureEnglishUI(src);
   // 記住「上一次載入完成時的 src」。
   // 這個判斷很關鍵：頁面一開始用未帶 prefill 的網址，等 participant 就緒後會換成
   // 帶 prefill 的網址，iframe 因此會多載入一次。若把那一次算成送出，
   // 表單會在剛載入時就被收合。所以只有「src 沒變卻又 reload」才視為送出。
   const lastLoadedSrc = useRef<string | null>(null);
-  /** 上一次 load 的時間，用來過濾「載入後馬上又被重新導覽」的假送出。 */
-  const lastLoadedAt = useRef<number | null>(null);
   const fired = useRef(false);
 
   const [collapsed, setCollapsed] = useState(false);
@@ -126,7 +148,7 @@ export default function GoogleFormEmbed({
 
     const ctrl = new AbortController();
     const hardStop = window.setTimeout(() => ctrl.abort(), PROBE_TIMEOUT_MS);
-    fetch(src, { mode: 'no-cors', method: 'HEAD', cache: 'no-store', signal: ctrl.signal })
+    fetch(formSrc, { mode: 'no-cors', method: 'HEAD', cache: 'no-store', signal: ctrl.signal })
       .then(() => {
         if (!cancelled) setReachable(true);
       })
@@ -147,34 +169,28 @@ export default function GoogleFormEmbed({
       window.clearTimeout(hardStop);
       window.clearTimeout(noLoad);
     };
-  }, [src, reloadKey]);
+  }, [formSrc, reloadKey]);
 
   const handleLoad = useCallback(() => {
     setLoadFired(true);
 
     const prev = lastLoadedSrc.current;
-    const prevAt = lastLoadedAt.current;
-    lastLoadedSrc.current = src;
-    lastLoadedAt.current = Date.now();
+    lastLoadedSrc.current = formSrc;
 
     if (!autoCollapse) return;
     // 首次載入、或 src 變更（帶入 prefill）造成的重新載入 → 不算送出
-    if (prev === null || prev !== src) return;
+    if (prev === null || prev !== formSrc) return;
 
-    // 🔴 時間守門：載入後太快的重新導覽不算送出。
-    // 這是草稿對話框（「繼續使用目前的草稿？」）被按掉的情況 ——
-    // 它會讓表單文件重新導覽一次，若不擋就會被誤判成送出，
-    // 表單縮成 460px 並把作答標成完成。詳見 MIN_FILL_MS 的說明。
-    if (prevAt !== null && Date.now() - prevAt < MIN_FILL_MS) {
-      return;
-    }
-
+    // 同 src 又載入 → 判定為送出。
+    // ⚠️ 這個判斷偶爾會誤判（草稿對話框被按掉時表單會重新導覽），
+    //    但**不再用時間門檻去猜**（會誤傷正常提交）。誤判由 handleToggle 的
+    //    「展開」撤銷，見檔頭說明。
     setCollapsed(true);
     if (!fired.current) {
       fired.current = true;
       onSubmitted?.();
     }
-  }, [autoCollapse, onSubmitted, src]);
+  }, [autoCollapse, onSubmitted, formSrc]);
 
   const retry = useCallback(() => {
     // ⚠️ 一定要把 lastLoadedSrc 歸零。
@@ -197,20 +213,25 @@ export default function GoogleFormEmbed({
   /**
    * 下方那顆小按鈕：收合／展開表單。
    *
-   * ⚠️ 收合時**同時宣告已遞交**（僅限單頁表單）。
-   * 原本它只切換高度、不通知父層，於是「真的送出但沒被偵測到」的參與者
-   * 按了也只會把表單收起來，**仍然沒有前進的路**（問卷頁刻意沒有下一頁按鈕）。
-   * 讓它同時宣告完成，就等於給了一條手動逃生路線 ——
-   * 這也是上面時間守門可以放心偏保守的前提：漏判是可復原的。
-   * （多頁表單的收合只是方便閱讀，不代表送出，所以不宣告。）
+   * 收合 → 同時宣告已遞交（僅單頁表單），給「真的送出但沒被偵測到」的人一條前進的路
+   *        （問卷頁刻意沒有下一頁按鈕，沒有這條路就會卡住）。
+   * 展開 → 同時**撤銷**「已遞交」，給「被誤判成送出」的人一條回頭的路。
+   *        沒有撤銷的話，誤判會讓問卷永久標成完成、甚至自動跳頁。
+   * （多頁表單的收合只是方便閱讀，不代表送出，所以兩個方向都不宣告。）
    */
   const handleToggle = useCallback(() => {
-    if (!collapsed && autoCollapse && !fired.current) {
+    if (collapsed) {
+      fired.current = false;
+      setCollapsed(false);
+      if (autoCollapse) onUnsubmit?.();
+      return;
+    }
+    if (autoCollapse && !fired.current) {
       fired.current = true;
       onSubmitted?.();
     }
-    setCollapsed((v) => !v);
-  }, [collapsed, autoCollapse, onSubmitted]);
+    setCollapsed(true);
+  }, [collapsed, autoCollapse, onSubmitted, onUnsubmit]);
 
   // 「連不到主機」單獨就足以判定失敗（錯誤頁也會觸發 load，所以不能反過來要求沒有 load）；
   // 「一直沒有 load」則是涵蓋請求整個卡住的情況。
@@ -228,7 +249,7 @@ export default function GoogleFormEmbed({
       >
         <iframe
           key={reloadKey}
-          src={src}
+          src={formSrc}
           width="100%"
           frameBorder="0"
           marginHeight={0}
@@ -283,7 +304,7 @@ export default function GoogleFormEmbed({
                 重新載入表單
               </button>
               <a
-                href={src}
+                href={formSrc}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-5 py-2.5 rounded-xl text-sm font-medium border transition-colors"

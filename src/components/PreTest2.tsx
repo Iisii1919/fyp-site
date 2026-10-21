@@ -14,12 +14,14 @@ interface PreTest2Props {
   submitted?: boolean;
   /** 偵測到送出時通知 PreTest。是否跳頁由 PreTest 依「三份都完成」判斷。 */
   onSubmitted?: () => void;
+  /** 參與者按「展開繼續作答」→ 撤銷「已完成」。 */
+  onUnsubmit?: () => void;
 }
 
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSdhW3ivEplLsKicsqOdBVn7aY0kmuI_w8Mml_DcJst1htX4bw/viewform?embedded=true';
 
-export default function PreTest2({ submitted = false, onSubmitted }: PreTest2Props) {
+export default function PreTest2({ submitted = false, onSubmitted, onUnsubmit }: PreTest2Props) {
   const participant = useParticipant();
   const [src, setSrc] = useState(FORM_SRC);
   // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
@@ -71,6 +73,7 @@ export default function PreTest2({ submitted = false, onSubmitted }: PreTest2Pro
           height={formHeight}
           title="Pre-Test: CD-RISC-10"
           onSubmitted={onSubmitted}
+          onUnsubmit={onUnsubmit}
         />
       </div>
 

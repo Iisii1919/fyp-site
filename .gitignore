@@ -52,7 +52,12 @@ restore-baseline.ps1
 setup-git.ps1
 dev-server*.log
 dev.log
-scripts/
+# Scratch helpers in scripts/ stay local, EXCEPT the Apps Script that merges the
+# form responses into the analysis table. That one is the research data pipeline
+# and existed only on one machine — it must be backed up. (It is also inert on
+# the website: nothing in src/ imports it, and Netlify never runs .gs files.)
+scripts/*
+!scripts/fyp-sheet-merge.gs
 AGENTS.md
 CHANGES.md
 CLAUDE.md

@@ -8,9 +8,9 @@ import StepFooter from './StepFooter';
 import QuestionnaireProgress from './QuestionnaireProgress';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
 
-// 進度小工具顯示的標籤。用**量表名稱**而不是「後測問卷（一）」這種編號。
+// 進度小工具顯示的標籤。用**量表全名**而不是編號。
 // ⚠️ 順序要跟下面 render 的順序一致：MLQ → CD-RISC-10 → ERQ。
-const LABELS = ['MLQ', 'CD-RISC-10', 'ERQ'];
+const LABELS = ['生命意義感量表', '簡易心理彈性量表', '情緒調節問卷'];
 
 interface PostTestProps {
   /** 三份後測問卷「都」送出後，自動前往完成頁。 */

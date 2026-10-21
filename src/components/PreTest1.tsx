@@ -38,14 +38,14 @@ export default function PreTest1({ submitted = false, onSubmitted }: PreTest1Pro
         viewport={{ once: true }}
         className="text-center mb-10"
       >
-        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Pre-Test: MLQ</h1>
-        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>前測：MLQ</h2>
+        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Pre-Test: Meaning in Life Questionnaire</h1>
+        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>前測：生命意義感量表</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
-          Please complete the MLQ before watching the videos.
+          Please complete the Meaning in Life Questionnaire before watching the videos.
         </p>
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
-          觀看影片前，請先完成 MLQ。
+          觀看影片前，請先完成生命意義感量表。
         </p>
 
         {/* 已提交標記：讓參與者一眼看出這份完成了沒 */}

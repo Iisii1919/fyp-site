@@ -38,14 +38,14 @@ export default function PostTest1({ submitted = false, onSubmitted }: PostTest1P
         viewport={{ once: true }}
         className="text-center mb-10"
       >
-        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Post-Test: MLQ</h1>
-        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>後測：MLQ</h2>
+        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Post-Test: Meaning in Life Questionnaire</h1>
+        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>後測：生命意義感量表</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
-          Please complete the MLQ after watching all videos.
+          Please complete the Meaning in Life Questionnaire after watching all videos.
         </p>
         <p className="text-[#8a8a8a] text-xs mt-1 text-center">
-          觀看所有影片後，請完成 MLQ。
+          觀看所有影片後，請完成生命意義感量表。
         </p>
 
         {/* 已提交標記：讓參與者一眼看出這份完成了沒 */}

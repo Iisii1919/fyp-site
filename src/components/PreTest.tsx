@@ -8,10 +8,11 @@ import StepFooter from './StepFooter';
 import QuestionnaireProgress from './QuestionnaireProgress';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
 
-// 進度小工具顯示的標籤。用**量表名稱**而不是「前測問卷（一）」這種編號：
-// 編號對參與者沒有意義，看不出自己在填什麼。
+// 進度小工具顯示的標籤。用**量表全名**而不是編號。
 // ⚠️ 順序要跟下面 render 的順序一致：MLQ → CD-RISC-10 → ERQ。
-const LABELS = ['MLQ', 'CD-RISC-10', 'ERQ'];
+// ⚠️ 這裡刻意用**中文全名**（比縮寫長很多），因為進度卡是參與者最常回頭看的地方。
+//    窄螢幕會折行；若之後覺得太擠，可以只把這裡換回縮寫，不影響頁面標題。
+const LABELS = ['生命意義感量表', '簡易心理彈性量表', '情緒調節問卷'];
 
 interface PreTestProps {
   /** 三份前測問卷「都」送出後，自動前往下一步。 */

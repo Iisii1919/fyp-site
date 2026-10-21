@@ -690,11 +690,15 @@ function VideoPlayer({  clip,
         }}
       />
 
-      {/* 所有視頻：左右分欄佈局（整體靠右），奇偶交替文字/視頻位置 */}
+      {/* 視頻區：≥lg 左右分欄（整體靠右，奇偶交替文字/視頻位置）；
+          <lg（手機、平板直立）改為上下堆疊——文字全寬在上、影片全寬在下。
+          🔴 2026-10-21 修正：之前所有寬度都是 flex-row，手機 390px 扣掉
+          px-12 與 gap-12 後文字欄只剩 ~150px，英文一個字一行、影片縮成
+          郵票大小（使用者在真機回報）。堆疊後兩欄都是全寬。 */}
       {
-        <div className="w-full lg:w-[84%] lg:ml-auto flex items-center gap-12 px-12 md:px-20 lg:px-24 relative z-10">
+        <div className="w-full lg:w-[84%] lg:ml-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-12 px-6 sm:px-10 md:px-16 lg:px-24 relative z-10">
           {/* 文字欄：標題 + 描述 */}
-          <div className={`flex-1 max-w-lg ${textOnLeft ? 'order-1' : 'order-2'}`}>
+          <div className={`w-full lg:flex-1 lg:max-w-lg order-1 ${textOnLeft ? 'lg:order-1' : 'lg:order-2'}`}>
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -739,7 +743,7 @@ function VideoPlayer({  clip,
           </div>
 
           {/* 視頻播放器欄（適當大小） */}
-          <div className={`flex-1 max-w-4xl ${textOnLeft ? 'order-2' : 'order-1'}`}>
+          <div className={`w-full lg:flex-1 lg:max-w-4xl order-2 ${textOnLeft ? 'lg:order-2' : 'lg:order-1'}`}>
             {videoPlayerEl}
           </div>
         </div>

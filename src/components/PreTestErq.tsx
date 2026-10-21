@@ -27,17 +27,19 @@ interface PreTestErqProps {
 // 表單裡已經沿用原始題號，切勿重新編號（重編會讓分析時對不回原始量表）。
 //
 // ---------------------------------------------------------------
-// ⚠️ 畫面上**刻意不寫出「情緒調節問卷 / Emotion Regulation Questionnaire」**
+// ⚠️ 頁面標題：**直接寫出量表名稱**（使用者 2026-10-21 指定）
 // ---------------------------------------------------------------
-// 這一頁的標題只叫「前測問卷（三）」，與 PreTest1 / PreTest2 連號。
-// 這不是漏寫，是刻意的：
-//   1. 直接告訴參與者「我們在量你的情緒調節策略」等於把研究假設講出來。
-//      參與者知道在量什麼之後可能順著調整作答（demand characteristics），
-//      而這份量表量的正是**穩定傾向**，被提示後最容易受影響 ——
-//      一旦作答被影響，前後測的比較也就失去意義。
-//   2. 與 Google 表單本身的標題一致：表單叫「觀前問卷3 Pre-Viewing Questionnaire3」，
-//      網站寫成「前測問卷（三）」才對得起來。
-//   → **不要把描述性名稱改回來。** 要知道這份是 ERQ，看這段註解就夠了。
+// 2026-10-13 曾刻意把標題改成「前測問卷（三）」，理由是怕在作答當下
+// 提示研究假設（這份量的是穩定慣用傾向，最容易被「猜到在問什麼」影響）。
+//
+// **2026-10-21 使用者改成要求顯示量表名稱**，理由是編號對參與者沒有意義、
+// 看不出自己在填什麼。已改回「Pre-Test: ERQ／前測：ERQ」。
+//
+// 這個取捨本身是合理的：資訊表（step 2，在所有問卷之前）本來就已經寫明
+// CD-RISC-10、MLQ、ERQ 與 cognitive reappraisal (Gross, 1998) ——
+// 所以「隱藏名稱」實際上擋不住什麼，只是讓頁面變得不清楚。
+//
+// ⚠️ 題目順序仍然不可打亂、題號仍是原始編號，那與標題無關，見下。
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSeeFbUWQOaH48D-HQ2VfbO7526s52gnZbOF61vhiAjX3xgIaw/viewform?embedded=true';
 
@@ -75,10 +77,10 @@ export default function PreTestErq({ submitted = false, onSubmitted }: PreTestEr
         className="text-center mb-10"
       >
         <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>
-          Pre-Test Questionnaire (3)
+          Pre-Test: ERQ
         </h1>
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>
-          前測問卷（三）
+          前測：ERQ
         </h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
@@ -101,7 +103,7 @@ export default function PreTestErq({ submitted = false, onSubmitted }: PreTestEr
         <GoogleFormEmbed
           src={src}
           height={formHeight}
-          title="Pre-Test Questionnaire 3"
+          title="Pre-Test: ERQ"
           onSubmitted={onSubmitted}
         />
       </div>

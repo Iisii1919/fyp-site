@@ -35,6 +35,25 @@ interface GoogleFormEmbedProps {
 // 收合後仍提供「展開表單」按鈕，即使判斷有誤使用者也能自行復原。
 const SUBMITTED_HEIGHT = 460;
 
+// 🔴 「同一個 src 又載入一次」這個訊號**不足以證明送出**（2026-10-21 實測）。
+//
+// 實測重現：在問卷頁把 iframe 的 src 重新指一次（＝任何讓表單文件重新導覽的原因），
+// 只觸發 1 次 load，`handleLoad` 就判定「已送出」→ 高度由 3420px 收合成 460px。
+// 但表單內容仍然是題目（「觀前問卷3 … 1 = Strongly Disagree」），根本沒送出。
+//
+// 真實會踩到的情況：Google 表單載入時若偵測到上次的草稿，會跳
+// 「繼續使用目前的草稿？」對話框；參與者按下之後，**表單文件會重新導覽一次**，
+// 於是被誤判成送出 → 表單瞬間縮成 460px，3000 多 px 的題目塞在小框裡
+// （使用者看到的就是「縮小變成內頁捲動」），而且 progress 會被標成已完成、
+// 甚至自動跳頁 → **直接損失一整份問卷的作答**。
+//
+// 所以再加一道**時間守門**：草稿對話框是在載入後幾秒內被按掉的，
+// 而真的填完一份問卷不可能這麼快。兩次 load 相隔太近就不算送出。
+//
+// ⚠️ 這是啟發式判斷，不是證明。刻意偏保守：漏判（真的送出卻沒收合）只是
+//    參與者要自己按「已遞交？」收合；誤判則會吃掉資料。兩害相權取其輕。
+const MIN_FILL_MS = 8000;
+
 // ⚠️ 載入失敗的救援機制（2026-09-13 新增）
 //
 // 為什麼需要：問卷頁（step 2 / 3 / 6 / 8）**刻意沒有任何「下一頁」按鈕**，
@@ -77,6 +96,8 @@ export default function GoogleFormEmbed({
   // 帶 prefill 的網址，iframe 因此會多載入一次。若把那一次算成送出，
   // 表單會在剛載入時就被收合。所以只有「src 沒變卻又 reload」才視為送出。
   const lastLoadedSrc = useRef<string | null>(null);
+  /** 上一次 load 的時間，用來過濾「載入後馬上又被重新導覽」的假送出。 */
+  const lastLoadedAt = useRef<number | null>(null);
   const fired = useRef(false);
 
   const [collapsed, setCollapsed] = useState(false);
@@ -132,10 +153,22 @@ export default function GoogleFormEmbed({
     setLoadFired(true);
 
     const prev = lastLoadedSrc.current;
+    const prevAt = lastLoadedAt.current;
     lastLoadedSrc.current = src;
+    lastLoadedAt.current = Date.now();
+
     if (!autoCollapse) return;
     // 首次載入、或 src 變更（帶入 prefill）造成的重新載入 → 不算送出
     if (prev === null || prev !== src) return;
+
+    // 🔴 時間守門：載入後太快的重新導覽不算送出。
+    // 這是草稿對話框（「繼續使用目前的草稿？」）被按掉的情況 ——
+    // 它會讓表單文件重新導覽一次，若不擋就會被誤判成送出，
+    // 表單縮成 460px 並把作答標成完成。詳見 MIN_FILL_MS 的說明。
+    if (prevAt !== null && Date.now() - prevAt < MIN_FILL_MS) {
+      return;
+    }
+
     setCollapsed(true);
     if (!fired.current) {
       fired.current = true;
@@ -160,6 +193,24 @@ export default function GoogleFormEmbed({
       onSubmitted?.();
     }
   }, [onSubmitted]);
+
+  /**
+   * 下方那顆小按鈕：收合／展開表單。
+   *
+   * ⚠️ 收合時**同時宣告已遞交**（僅限單頁表單）。
+   * 原本它只切換高度、不通知父層，於是「真的送出但沒被偵測到」的參與者
+   * 按了也只會把表單收起來，**仍然沒有前進的路**（問卷頁刻意沒有下一頁按鈕）。
+   * 讓它同時宣告完成，就等於給了一條手動逃生路線 ——
+   * 這也是上面時間守門可以放心偏保守的前提：漏判是可復原的。
+   * （多頁表單的收合只是方便閱讀，不代表送出，所以不宣告。）
+   */
+  const handleToggle = useCallback(() => {
+    if (!collapsed && autoCollapse && !fired.current) {
+      fired.current = true;
+      onSubmitted?.();
+    }
+    setCollapsed((v) => !v);
+  }, [collapsed, autoCollapse, onSubmitted]);
 
   // 「連不到主機」單獨就足以判定失敗（錯誤頁也會觸發 load，所以不能反過來要求沒有 load）；
   // 「一直沒有 load」則是涵蓋請求整個卡住的情況。
@@ -256,10 +307,10 @@ export default function GoogleFormEmbed({
       {showToggle && (
         <button
           type="button"
-          onClick={() => setCollapsed((v) => !v)}
+          onClick={handleToggle}
           className="text-[#8a8a8a] hover:text-[#d4bfff] text-xs mt-3 transition-colors"
         >
-          {collapsed ? '展開表單' : '已遞交？收起表單'}
+          {collapsed ? '表單已收起 · 還沒填完？展開繼續作答' : '已遞交？收起表單並繼續'}
         </button>
       )}
     </>

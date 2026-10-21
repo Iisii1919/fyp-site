@@ -38,8 +38,8 @@ export default function PostTest1({ submitted = false, onSubmitted }: PostTest1P
         viewport={{ once: true }}
         className="text-center mb-10"
       >
-        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Post-Test Questionnaire (1)</h1>
-        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>後測問卷（一）</h2>
+        <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>Post-Test: MLQ</h1>
+        <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>後測：MLQ</h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
           Please complete the first post-test questionnaire after watching all videos.
@@ -61,7 +61,7 @@ export default function PostTest1({ submitted = false, onSubmitted }: PostTest1P
         <GoogleFormEmbed
           src={src}
           height={formHeight}
-          title="Post-Test Questionnaire 1"
+          title="Post-Test: MLQ"
           onSubmitted={onSubmitted}
         />
       </div>

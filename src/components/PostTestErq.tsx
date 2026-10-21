@@ -23,9 +23,10 @@ interface PostTestErqProps {
 //
 // ⚠️ 題號沿用 ERQ 原始編號（1/3/5/7/8/10），不可重新編號，理由見 PreTestErq.tsx。
 //
-// ⚠️ 畫面上**刻意不寫出「情緒調節問卷 / Emotion Regulation Questionnaire」**，
-//    只叫「後測問卷（三）」。理由與前測完全相同（避免提示研究假設、與表單標題一致），
-//    詳見 PreTestErq.tsx 檔頭的說明。**不要把描述性名稱改回來。**
+// ⚠️ 頁面標題直接寫出量表名稱（使用者 2026-10-21 指定）。
+//    2026-10-13 曾刻意改成「後測問卷（三）」以隱藏量表名，2026-10-21 已改回
+//    「Post-Test: ERQ／後測：ERQ」—— 理由與取捨見 PreTestErq.tsx 檔頭說明。
+//    **不要把標題改回編號。**
 const FORM_SRC =
   'https://docs.google.com/forms/d/e/1FAIpQLSf4dqWthqMj6ZaZk0FVltBMCmi6GM_cqpT-bosuB8iU03z-Fg/viewform?embedded=true';
 
@@ -63,10 +64,10 @@ export default function PostTestErq({ submitted = false, onSubmitted }: PostTest
         className="text-center mb-10"
       >
         <h1 className="font-serif font-bold text-[#FFFFFF] text-3xl md:text-4xl mb-2" style={H1_PAGE}>
-          Post-Test Questionnaire (3)
+          Post-Test: ERQ
         </h1>
         <h2 className="font-serif text-gold-gradient text-xl md:text-2xl font-medium mb-4" style={H2_PAGE}>
-          後測問卷（三）
+          後測：ERQ
         </h2>
         <div className="gold-divider max-w-xs mx-auto mb-4"></div>
         <p className="text-[#9a9a9a] text-sm text-center">
@@ -89,7 +90,7 @@ export default function PostTestErq({ submitted = false, onSubmitted }: PostTest
         <GoogleFormEmbed
           src={src}
           height={formHeight}
-          title="Post-Test Questionnaire 3"
+          title="Post-Test: ERQ"
           onSubmitted={onSubmitted}
         />
       </div>

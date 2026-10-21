@@ -57,7 +57,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
   return (
     <div
       ref={heroRef}
-      className="relative h-screen w-full overflow-hidden"
+      className="relative min-h-screen w-full overflow-hidden"
       style={{ background: 'radial-gradient(ellipse at 50% 0%, #5e5e5e 0%, #545454 50%, #3d3d3d 100%)' }}
     >
       {/* 環境光暈 */}
@@ -93,8 +93,14 @@ export default function Hero({ onMouseMove }: HeroProps) {
       {/* 內容區刻意只佔「視窗高度 − 112px」。
           StepFooter 是 absolute bottom-0 且固定佔 112px，如果把內容置中於整個
           100vh，視窗高度剛好時最後一行文字會落在頁腳帶裡被「Next · 下一頁」按鈕蓋住
-          （實測 inner height 760–920px 都會發生）。限制高度後按鈕永遠不會壓到內容。 */}
-      <div className="hero-rhythm relative z-10 h-[calc(100vh-112px)] w-full flex items-center justify-center overflow-hidden">
+          （實測 inner height 760–920px 都會發生）。限制高度後按鈕永遠不會壓到內容。
+
+          🔴 2026-10-21 修正：這裡原本是固定 `h-[calc(100vh-112px)]` + `overflow-hidden`。
+          一旦內容比這個高度高（例如標題多了一行），`items-center` 會讓內容**上下都溢出**，
+          而 `overflow-hidden` 把上面那半**永久裁掉、連捲動都到不了** ——
+          實測手機 390×844 時整行「Sadness Film」完全不見。
+          → 改成 `min-h-`，內容變高時容器跟著長高（頁面正常捲動），永遠不會有東西被藏起來。 */}
+      <div className="hero-rhythm relative z-10 min-h-[calc(100vh-112px)] w-full flex items-center justify-center">
       <motion.div
         variants={containerVariants}
         initial="hidden"
@@ -115,12 +121,12 @@ export default function Hero({ onMouseMove }: HeroProps) {
         <motion.div variants={itemVariants} className="mb-[calc(var(--hero-gap)*0.5)]">
           <h1 className="hero-title font-serif font-bold leading-[1.05]">
             <span className="block text-[#FFFFFF]">Sadness Film</span>
-            <span className="block text-accent-gradient italic mt-2">on Resilience</span>
-            {/* 研究全名還有「and the Meaning of Life」。用同一組漸層斜體但縮小，
-                讓它讀起來是上一行的延續，而不是三個等重的大標題
-                —— 三行等大的 serif 在矮螢幕上會把下面的內容推出畫面。 */}
-            <span className="block text-accent-gradient italic mt-1 text-[0.52em]">
-              and the Meaning of Life
+            {/* 「on Resilience」與「and the Meaning of Life」**同一行、同字級**（使用者指定）。
+                原本第三行縮成 0.52em 另起一行，讀起來像附註、不夠好看。
+                窄螢幕會自然折行；`text-balance` 讓兩行長度接近，
+                否則預設折行會變成「…and the Meaning」／「of Life」，最後一行只剩兩個字很醜。 */}
+            <span className="block text-accent-gradient italic mt-2" style={{ textWrap: 'balance' }}>
+              on Resilience and the Meaning of Life
             </span>
           </h1>
         </motion.div>

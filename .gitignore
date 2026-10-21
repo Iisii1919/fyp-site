@@ -50,6 +50,7 @@ screenshot-*.png
 ss-*.png
 restore-baseline.ps1
 setup-git.ps1
+start-dev.bat
 dev-server*.log
 dev.log
 # Scratch helpers in scripts/ stay local, EXCEPT the Apps Script that merges the

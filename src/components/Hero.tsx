@@ -116,13 +116,19 @@ export default function Hero({ onMouseMove }: HeroProps) {
           <h1 className="hero-title font-serif font-bold leading-[1.05]">
             <span className="block text-[#FFFFFF]">Sadness Film</span>
             <span className="block text-accent-gradient italic mt-2">on Resilience</span>
+            {/* 研究全名還有「and the Meaning of Life」。用同一組漸層斜體但縮小，
+                讓它讀起來是上一行的延續，而不是三個等重的大標題
+                —— 三行等大的 serif 在矮螢幕上會把下面的內容推出畫面。 */}
+            <span className="block text-accent-gradient italic mt-1 text-[0.52em]">
+              and the Meaning of Life
+            </span>
           </h1>
         </motion.div>
 
         {/* 副標題 */}
         <motion.div variants={itemVariants} className="mb-[var(--hero-gap)]">
           <h2 className="text-[#EAECEF] font-serif font-medium tracking-wide">
-            傷感電影與心理韌性研究
+            傷感電影與心理韌性及生命意義研究
           </h2>
         </motion.div>
 
@@ -136,10 +142,11 @@ export default function Hero({ onMouseMove }: HeroProps) {
         {/* 描述 */}
         <motion.div variants={itemVariants} className="max-w-2xl mx-auto mb-[calc(var(--hero-gap)*1.25)]">
           <p className="text-[#c4c4c4] text-lg leading-relaxed">
-            This study aims to explore the influence of sadness film on psychological resilience.
+            This study aims to explore the influence of sadness film on psychological resilience
+            and the meaning of life.
           </p>
           <p className="text-[#9a9a9a] text-base mt-3 leading-relaxed">
-            本研究旨在探討傷感電影對心理韌性的影響。
+            本研究旨在探討傷感電影對心理韌性及生命意義的影響。
           </p>
         </motion.div>
 

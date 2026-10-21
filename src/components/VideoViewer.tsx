@@ -133,6 +133,10 @@ function VideoPlayer({  clip,
   const containerRef = useRef<HTMLDivElement>(null);
   const progressRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  // 緩衝中：影片檔案很大（單支 371–648 MB），按下播放後要等幾秒才真的動起來。
+  // 沒有這個指示，參與者會以為「按了沒反應」而重複點擊 —— 那正是
+  // AbortError 的觸發情境，也是使用者回報「一開始播放不了」的真正體感。
+  const [isBuffering, setIsBuffering] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -155,12 +159,39 @@ function VideoPlayer({  clip,
   const [gestureFlash, setGestureFlash] = useState<{ id: number; kind: FlashKind } | null>(null);
   const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  /**
+   * 播放／暫停切換。
+   *
+   * 🔴 兩個地方很容易寫錯，都會產生使用者看得到的錯誤：
+   *
+   * 1. **一定要判斷 `v.paused`（影片的真實狀態），不要用 `isPlaying` state。**
+   *    `isPlaying` 是「上一次操作後我們以為的狀態」。這些影片檔很大
+   *    （單支 371–648 MB，實測），按下播放後 `play()` 的 Promise 可能
+   *    **pending 好幾秒**在等緩衝。此時 `isPlaying` 已經被設成 true，
+   *    但影片實際上還是 paused。使用者看畫面沒動就會**再點一次**，
+   *    於是走進 `pause()` 分支 → **中斷尚未完成的 play()**
+   *    → 瀏覽器丟 `AbortError: The play() request was interrupted by a call to pause()`。
+   *    這正是 2026-10-21 使用者回報的那個錯誤。
+   *
+   * 2. **`play()` 回傳 Promise，必須接住 rejection。**
+   *    沒接住就會變成 unhandled promise rejection ——
+   *    dev 模式會直接跳出紅色錯誤覆蓋層（使用者看到的就是那個）。
+   *    ⚠️ 生產環境不會顯示覆蓋層，但錯誤仍然存在，只是安靜地進 console。
+   *
+   * 另外不再手動 `setIsPlaying`：`onPlay` / `onPause` 事件才是真實來源，
+   * 手動設值只會讓 state 與實際狀態不同步。
+   */
   const togglePlay = useCallback(() => {
-    if (!videoRef.current) return;
-    if (isPlaying) videoRef.current.pause();
-    else videoRef.current.play();
-    setIsPlaying(!isPlaying);
-  }, [isPlaying]);
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      v.play().catch(() => {
+        /* 被後續的 pause() 中斷、或瀏覽器拒絕（無使用者手勢）都在預期內 */
+      });
+    } else {
+      v.pause();
+    }
+  }, []);
 
   const toggleFullscreen = useCallback(() => {
     if (!containerRef.current) return;
@@ -571,7 +602,11 @@ function VideoPlayer({  clip,
           src={videoUrl(clip.src) || undefined}
           onEnded={handleEnded}
           onPlay={() => setIsPlaying(true)}
-          onPause={() => setIsPlaying(false)}
+          onPause={() => { setIsPlaying(false); setIsBuffering(false); }}
+          // 緩衝狀態：waiting 開始等資料、playing/canplay 表示可以跑了。
+          onWaiting={() => setIsBuffering(true)}
+          onPlaying={() => setIsBuffering(false)}
+          onCanPlay={() => setIsBuffering(false)}
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
           onVolumeChange={handleVolumeChange}
@@ -580,6 +615,27 @@ function VideoPlayer({  clip,
         />
 
       </div>
+
+      {/* 緩衝指示：影片檔很大，按下播放後要等幾秒才動。
+          沒有這個，參與者會以為「按了沒反應」而重複點擊。
+          pointer-events-none 同樣必要，否則會吃掉點擊。 */}
+      {isBuffering && (
+        <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+          <div
+            className="flex flex-col items-center gap-2 rounded-2xl px-5 py-4"
+            style={{ background: 'rgba(0,0,0,0.55)' }}
+            role="status"
+            aria-live="polite"
+          >
+            <span
+              className="block w-8 h-8 rounded-full animate-spin"
+              style={{ border: '3px solid rgba(198,168,248,0.25)', borderTopColor: '#C6A8F8' }}
+              aria-hidden
+            />
+            <span className="text-[#EAECEF] text-xs">載入中… Loading</span>
+          </div>
+        </div>
+      )}
 
       {/* 雙擊回饋（YouTube 風格）：中間浮現播放／暫停，兩側浮現 ±10 秒。
           pointer-events-none 是必要的 —— 否則這個覆蓋層會吃掉第二次點擊，

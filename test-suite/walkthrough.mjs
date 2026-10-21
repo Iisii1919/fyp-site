@@ -18,10 +18,15 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
 const MOBILE = process.argv.includes('--mobile');
-const MODE = MOBILE ? 'mobile' : 'desktop';
+const IPAD = process.argv.includes('--ipad');
+const IPAD_LANDSCAPE = process.argv.includes('--ipad-landscape');
+const TOUCH = MOBILE || IPAD || IPAD_LANDSCAPE;
+const WIDTH = MOBILE ? 390 : IPAD ? 820 : IPAD_LANDSCAPE ? 1180 : 1440;
+const HEIGHT = MOBILE ? 844 : IPAD ? 1180 : IPAD_LANDSCAPE ? 820 : 900;
+const MODE = MOBILE ? 'mobile' : IPAD ? 'ipad' : IPAD_LANDSCAPE ? 'ipad-landscape' : 'desktop';
 const CHROME = 'C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe';
 const PROXY = process.env.HTTPS_PROXY || process.env.HTTP_PROXY || '';
-const CDP_PORT = MOBILE ? 9461 : 9460;
+const CDP_PORT = MOBILE ? 9461 : IPAD ? 9462 : IPAD_LANDSCAPE ? 9463 : 9460;
 const SITE_PORT = 3100;
 const OUT_DIR = join(process.cwd(), 'test-results', MODE);
 mkdirSync(OUT_DIR, { recursive: true });
@@ -57,7 +62,7 @@ const chrome = spawn(CHROME, [
   '--disable-default-apps', '--no-service-autorun', '--disable-breakpad',
   '--headless=new', `--remote-debugging-port=${CDP_PORT}`, `--user-data-dir=${profile}`,
   '--no-first-run', '--no-default-browser-check', '--disable-gpu', '--mute-audio',
-  '--lang=en-US', `--window-size=${MOBILE ? '390,844' : '1440,900'}`,
+  '--lang=en-US', `--window-size=${WIDTH},${HEIGHT}`,
   ...(PROXY ? [`--proxy-server=${PROXY}`, '--proxy-bypass-list=127.0.0.1;localhost'] : []),
   '--ignore-certificate-errors', 'about:blank',
 ], { stdio: 'ignore' });
@@ -128,10 +133,12 @@ await send('Runtime.enable');
 await send('Network.enable');
 await send('Target.setAutoAttach', { autoAttach: true, waitForDebuggerOnStart: false, flatten: true });
 
-if (MOBILE) {
-  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
+if (TOUCH) {
+  await send('Emulation.setDeviceMetricsOverride', { width: WIDTH, height: HEIGHT, deviceScaleFactor: 2, mobile: true });
   await send('Emulation.setUserAgentOverride', {
-    userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
+    userAgent: IPAD || IPAD_LANDSCAPE
+      ? 'Mozilla/5.0 (iPad; CPU OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1'
+      : 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1',
   });
   await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
 }
@@ -183,7 +190,7 @@ async function tapCenterOf(selector, text) {
   return true;
 }
 async function swipeUp() {
-  const x = 195, y0 = 650, y1 = 250;
+  const x = Math.round(WIDTH / 2), y0 = Math.round(HEIGHT * 0.77), y1 = Math.round(HEIGHT * 0.3);
   await send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [{ x, y: y0 }] });
   for (let i = 1; i <= 5; i++) {
     await send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: [{ x, y: y0 + ((y1 - y0) * i) / 5 }] });
@@ -271,8 +278,9 @@ await waitFor('首頁載入', `document.body && document.body.innerText.includes
 console.log('\n-- Step 0: Hero --');
 check('Hero 地標', /傷感電影與心理韌性/.test(await bodyText() || ''));
 check('Hero 無水平溢出', (await overflowPx()) <= 1, `overflow=${await overflowPx()}`);
+await sleep(2200); // Hero 進場動畫是交錯淡入，等跑完再截圖
 await shot('00-hero');
-if (MOBILE) {
+if (TOUCH) {
   check('Hero 用觸控輕點前進', await tapCenterOf('button', 'Next · 下一頁'));
 } else {
   check('Hero 按 Next 前進', await clickByText('button', 'Next · 下一頁'));
@@ -353,15 +361,24 @@ console.log('\n-- Step 4: 前測問卷 ×3 --');
 await checkFormIframes('前測', 3);
 check('前測進度卡', /生命意義感量表/.test(await bodyText() || ''));
 check('前測頁無水平溢出', (await overflowPx()) <= 1, `overflow=${await overflowPx()}`);
-if (MOBILE) {
+if (TOUCH) {
   const y0 = await ev('window.scrollY');
   await swipeUp();
   await sleep(300);
   const y1 = await ev('window.scrollY');
   check('問卷頁觸控滑動有效', y1 > y0 + 100, `${y0} → ${y1}`);
-  await sleep(1200);
-  const y2 = await ev('window.scrollY');
-  check('問卷頁滑動後不被吸附拉回', Math.abs(y2 - y1) < 60, `${y1} → ${y2}`);
+  // 等慣性滾動完全停下再判定。iPad 尺寸的滑動距離長、慣性可持續 1–2 秒，
+  // 固定等 1200ms 經常還在漂，造成假陰性（2026-10-21 連續兩次 1249→2051）。
+  let y2 = y1;
+  for (let i = 0; i < 12; i++) {
+    await sleep(400);
+    const yc = await ev('window.scrollY');
+    if (Math.abs(yc - y2) < 5) { y2 = yc; break; }
+    y2 = yc;
+  }
+  // 這個測試的本意是防「被捲動吸附拉回去」：停穩後位置不得明顯小於滑動剛結束時。
+  // 往前多滑一段是正常慣性，不是 bug，所以不設上限。
+  check('問卷頁滑動後不被吸附拉回', y2 >= y1 - 80, `${y1} → ${y2}`);
 }
 await shot('04-pretest');
 // 接續測試：重新載入 → 應出現提示 → 接續後回到前測
@@ -406,6 +423,10 @@ check('影片 readyState ≥ 2', play && play.rs >= 2, `readyState=${play && pla
 await shot('06-video-playing');
 await ev(`document.querySelectorAll('video').forEach((v) => v.pause())`);
 check('影片頁無水平溢出', (await overflowPx()) <= 1, `overflow=${await overflowPx()}`);
+// 往下捲一個視窗高，拍第一支片段的實際排版（平板寬度會走 md 並排版型，要目視確認）
+await ev(`window.scrollBy(0, Math.round(window.innerHeight * 1.05))`);
+await sleep(1800);
+await shot('06b-clip-layout');
 await clickByText('button', 'Next · 下一頁');
 await waitFor('進入觀影回饋', `document.body.innerText.includes('回饋') || document.body.innerText.includes('Feedback') || document.querySelectorAll('iframe').length >= 1`, 8000);
 

@@ -147,11 +147,11 @@ export default function Hero({ onMouseMove }: HeroProps) {
 
         {/* 描述 */}
         <motion.div variants={itemVariants} className="max-w-2xl mx-auto mb-[calc(var(--hero-gap)*1.25)]">
-          <p className="text-[#c4c4c4] text-lg leading-relaxed">
+          <p className="text-[#c4c4c4] text-base leading-relaxed">
             This study aims to explore the influence of sadness film on psychological resilience
             and the meaning of life.
           </p>
-          <p className="text-[#9a9a9a] text-base mt-3 leading-relaxed">
+          <p className="text-[#9a9a9a] text-sm mt-3 leading-relaxed">
             本研究旨在探討傷感電影對心理韌性及生命意義的影響。
           </p>
         </motion.div>
@@ -184,7 +184,7 @@ export default function Hero({ onMouseMove }: HeroProps) {
             </svg>
             <span className="text-[10px] tracking-[0.25em] uppercase text-[#d4bfff] font-medium">~ 30 min</span>
           </div>
-          <p className="text-[#c4c4c4] text-base leading-relaxed">
+          <p className="text-[#c4c4c4] text-sm leading-relaxed">
             The full study takes about 30 minutes. Please reserve enough time to participate.
           </p>
           <p className="text-[#9a9a9a] text-sm leading-relaxed mt-2">

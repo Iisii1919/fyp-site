@@ -33,6 +33,14 @@ import { useResearcherEscape } from '@/lib/useResearcherEscape';
 //  10 ThankYou
 const TOTAL_STEPS = 11;
 
+/**
+ * step 8（「感謝你的回饋」分隔頁）停留多久後自動前往後測問卷。
+ *
+ * 3.5 秒：進場動畫 0.8 秒，剩下約 2.7 秒讀中英兩句。太短會來不及讀，
+ * 太長則失去「自動」的意義（使用者在意的是參與者以為結束了就離開）。
+ */
+const SEPARATOR_AUTO_ADVANCE_MS = 3500;
+
 // 給「接續上次進度」提示用的步驟名稱，順序要跟上面的步驟表一致。
 // ⚠️ 長度必須等於 TOTAL_STEPS，且**每一項要對到正確的步驟編號**，
 //    否則接續提示會指著錯誤的頁面名稱。驗證：verify-screening-step.mjs。
@@ -183,6 +191,23 @@ export default function Home() {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [step]);
+
+  /**
+   * 分隔頁（step 8「感謝你的回饋」）自動前往後測問卷。
+   *
+   * 🔴 為什麼要自動跳（2026-10-22 使用者提出）：這一頁只有一句感謝＋一個 chevron，
+   *    參與者很容易以為「研究到這裡結束了」就直接關掉分頁，
+   *    於是**後測問卷整段收不到資料**。改成自動跳，他們就算不按也會被帶到下一步。
+   *
+   * ⚠️ chevron 仍然保留（見下面那頁的 StepFooter）—— 自動跳是「一定會發生」，
+   *    但萬一計時器被瀏覽器凍結（切到別的 app、鎖屏、省電模式），參與者還有手動的路。
+   * ⚠️ step 一改變（自動跳或手動按）就會 cleanup 清掉計時器，不會重複跳。
+   */
+  useEffect(() => {
+    if (step !== 8) return;
+    const t = window.setTimeout(() => goNext(), SEPARATOR_AUTO_ADVANCE_MS);
+    return () => window.clearTimeout(t);
+  }, [step, goNext]);
 
   /**
    * 是否啟用自訂垂直吸附。
@@ -428,8 +453,29 @@ export default function Home() {
               <p className="text-[#C6A8F8] text-lg mb-2">Thank you for your feedback</p>
               <p className="text-[#9a9a9a] text-sm mt-6">接下來請完成後測問卷</p>
               <p className="text-[#8a8a8a] text-xs mt-1">Next, please complete the post-test questionnaire</p>
+
+              {/* 自動前往後測的視覺提示：一條會填滿的細線＋文字。
+                  目的是讓參與者知道「還有下一步、正在自動前往」，
+                  而不是以為研究在此結束就關掉分頁（使用者提出的擔憂）。 */}
+              <div
+                className="mt-8 w-40 h-0.5 mx-auto rounded-full overflow-hidden"
+                style={{ background: 'rgba(198,168,248,0.2)' }}
+                aria-hidden
+              >
+                <motion.div
+                  initial={{ width: '0%' }}
+                  animate={{ width: '100%' }}
+                  transition={{ duration: SEPARATOR_AUTO_ADVANCE_MS / 1000, ease: 'linear' }}
+                  className="h-full bg-[#d4bfff]"
+                />
+              </div>
+              <p className="text-[#8a8a8a] text-[11px] mt-3 leading-snug">
+                Continuing to the post-test automatically…
+                <span className="block">正在自動前往後測問卷…</span>
+              </p>
             </motion.div>
-            {/* 純文字分隔頁，沒有任何按鈕 → 需要 chevron */}
+            {/* 這一頁會在 SEPARATOR_AUTO_ADVANCE_MS 後自動前往後測；
+                chevron 留著作為備援 —— 計時器被瀏覽器凍結時仍可手動前進。 */}
             <StepFooter onNext={goNext} canNext />
           </section>
         )}

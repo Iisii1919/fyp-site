@@ -554,12 +554,16 @@ function VideoPlayer({  clip,
               </span>
             </div>
 
-            <div className="flex items-center gap-2">
-              {/* 標題 */}
-              {/* 標題：min-w-0 讓 truncate 真的生效（flex 子項預設 min-width:auto，
-                  內容縮不下去）。窄播放器時標題先讓位，全屏鈕才不會被擠出容器外
-                  （2026-10-22 iPad 真機回報：只剩標題文字、放大鈕消失）。 */}
-              <span className="text-white/70 text-xs font-medium truncate max-w-[200px] min-w-0 hidden sm:block">{clip.title} · {clip.titleZh}</span>
+            <div className="flex items-center gap-2 shrink-0">
+              {/* 🔴 控制條上的片名已在 2026-10-22 移除，不要加回來。
+                  原因（實測，不是猜）：左邊那組（播放＋音量＋時間）全是 shrink-0，
+                  右邊若再放片名，控制條需要約 416px；但 iPad 左右分欄時播放器只有
+                  約 306px 寬 → 全屏鈕被推到播放器右邊界外 110px
+                  （實測 fsOverflowRight = 110px、fsInsidePlayer = false），
+                  而播放器是 overflow-hidden，所以全屏鈕看不到也按不到（使用者真機回報）。
+                  片名在影片旁邊已經有一個很大的 h2，控制條這個是重複的，
+                  因此對**所有影片**統一移除（同一個元件，自然一致）。
+                  ⚠️ 若日後想放回，必須先確保播放器夠寬，否則同一問題會再出現。 */}
               {/* 全屏 */}
               <button
                 onClick={toggleFullscreen}
@@ -665,9 +669,17 @@ function VideoPlayer({  clip,
     </motion.div>
   );
 
+  // 🔴 overflow-hidden 不能拿掉（2026-10-22 修手機「內容偏左」）：
+  // 下面那個 500px 寬的 ambient-glow，在奇數段落是設在 left:5%，
+  // 會向右伸出畫面外 —— 390px 手機實測 right=519px，即整個 document
+  // 多了 129px 的水平捲動空間。但 section 本身仍是滿版寬（380px），
+  // 於是**每一段**（包括沒有溢出的段落）右邊都會露出一條深色帶，
+  // 看起來就像「內容偏左、沒有居中」。
+  // 其他 section（本檔第 788、868 行）本來就有 overflow-hidden，只有這裡漏了。
+  // ⚠️ 用 min-h-screen（不是 h-screen）所以內容變高時容器會跟著長，不會裁到內容。
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center relative scroll-snap-start py-10 lg:py-0"
+      className="min-h-screen w-full flex items-center justify-center relative scroll-snap-start overflow-hidden py-10 lg:py-0"
       style={{ background: index % 2 === 0
         ? 'radial-gradient(ellipse at 30% 50%, #545454 0%, #4a4a4a 60%, #3d3d3d 100%)'
         : 'radial-gradient(ellipse at 70% 50%, #565656 0%, #4a4a4a 60%, #3d3d3d 100%)'
@@ -701,7 +713,7 @@ function VideoPlayer({  clip,
           🔴 2026-10-22：md 的左右 padding 由 16 縮到 10（iPad 直立 820px 時
           影片由 ~692px 加寬到 ~740px，使用者要求「視頻邊框放大一些」）。 */}
       {
-        <div className="w-full lg:w-[84%] lg:ml-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-12 px-6 sm:px-10 md:px-10 lg:px-24 relative z-10">
+        <div className="w-full lg:w-[92%] lg:ml-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-12 px-6 sm:px-10 md:px-10 lg:px-24 relative z-10">
           {/* 文字欄：標題 + 描述。
               堆疊時（<lg）用 max-w-2xl 收斂行寬並隨 items-center 置中——
               全寬的 700px+ 長行很難讀，而且文字區比影片窄一點、視覺上影片更大
@@ -750,8 +762,14 @@ function VideoPlayer({  clip,
             </motion.div>
           </div>
 
-          {/* 視頻播放器欄（適當大小） */}
-          <div className={`w-full lg:flex-1 lg:max-w-4xl order-2 ${textOnLeft ? 'lg:order-2' : 'lg:order-1'}`}>
+          {/* 視頻播放器欄（適當大小）
+              ⚠️ lg:flex-[1.265] 不是隨意數字（2026-10-22 使用者要求「iPad 影片放大一點、
+                 往邊緣靠，但不要動文字排版」）。推導：容器由 84% 放寬到 92% 後，
+                 可用寬度變成 0.92W-240；要讓**文字欄維持原本寬度**，
+                 影片:文字 的比例必須是 1.265:1（因為原本是 1:1 均分）。
+                 實測結果：文字欄在各寬度只差 2–6px（幾乎不動），
+                 影片欄則寬約 25% 並往左邊緣靠近。 */}
+          <div className={`w-full lg:flex-[1.265] lg:max-w-4xl order-2 ${textOnLeft ? 'lg:order-2' : 'lg:order-1'}`}>
             {videoPlayerEl}
           </div>
         </div>

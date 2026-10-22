@@ -193,14 +193,64 @@ function VideoPlayer({  clip,
     }
   }, []);
 
+  /**
+   * 切換全屏 —— 必須三段式後備，因為各平台支援差很大。
+   *
+   * 🔴 2026-10-22 使用者回報「手機按了全屏沒反應」。根因是**平台限制，不是排版**：
+   *    iPhone Safari **沒有實作標準 Fullscreen API**：
+   *      - `element.requestFullscreen` 不存在（或存在但被靜默忽略）
+   *      - `document.fullscreenElement` / `fullscreenchange` 也不可用
+   *      - iOS 上**只有 `<video>` 能全屏**，方法是 `video.webkitEnterFullscreen()`
+   *    舊寫法只呼叫 `requestFullscreen()` → 在 iPhone 上等於什麼都沒做。
+   *    ⚠️ 桌面 Chrome 有支援，所以自動化測試會過 —— 那就是測不到這個 bug 的原因。
+   *    （iPad Safari 支援 `webkitRequestFullscreen`；桌面舊 Safari 也只認前綴版。）
+   *
+   * 順序：標準 → Safari 舊前綴 → iOS 的 video 專用方法。
+   * ⚠️ `requestFullscreen()` 回傳 Promise 且可能 reject（非使用者手勢、權限等），
+   *    一定要 catch；reject 時順便退回 iOS 的 video 全屏。
+   * ⚠️ 不要在這裡直接 setIsFullscreen —— 狀態只由事件決定（見下面的 effect），
+   *    否則呼叫失敗時按鈕圖示會顯示錯誤的狀態。
+   */
   const toggleFullscreen = useCallback(() => {
-    if (!containerRef.current) return;
-    if (!document.fullscreenElement) {
-      containerRef.current.requestFullscreen();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen();
-      setIsFullscreen(false);
+    const doc = document as Document & {
+      webkitFullscreenElement?: Element | null;
+      webkitExitFullscreen?: () => void;
+    };
+    const container = containerRef.current as
+      | (HTMLDivElement & { webkitRequestFullscreen?: () => void })
+      | null;
+    const v = videoRef.current as
+      | (HTMLVideoElement & { webkitEnterFullscreen?: () => void })
+      | null;
+
+    // 已經在全屏 → 退出（iOS 的原生播放器全屏由系統按鈕關閉，不走這條）
+    const current = doc.fullscreenElement ?? doc.webkitFullscreenElement ?? null;
+    if (current) {
+      if (doc.exitFullscreen) void doc.exitFullscreen().catch(() => {});
+      else doc.webkitExitFullscreen?.();
+      return;
+    }
+
+    // 1) 標準 API（Android Chrome、桌面 Chrome/Firefox/Safari 新版的容器全屏）
+    if (container?.requestFullscreen) {
+      void container.requestFullscreen().catch(() => {
+        // 被拒或靜默無效 → 退回 iOS 的 video 全屏
+        v?.webkitEnterFullscreen?.();
+      });
+      return;
+    }
+    // 2) Safari 舊前綴（iPad Safari 走這條，容器全屏、自製控制條仍在）
+    if (container?.webkitRequestFullscreen) {
+      container.webkitRequestFullscreen();
+      return;
+    }
+    // 3) iPhone Safari：只有 video 能全屏。
+    //    這會開 iOS 原生播放器 —— 自製控制條與雙擊手勢不會出現，這是 iOS 的既定行為。
+    //    ⚠️ 影片尚未載入時 webkitEnterFullscreen 會拋錯，所以包 try/catch。
+    try {
+      v?.webkitEnterFullscreen?.();
+    } catch {
+      // iOS 拒絕（例如還沒 readyState）→ 什麼都不做，按鈕至少不會讓頁面出錯
     }
   }, []);
 
@@ -379,10 +429,34 @@ function VideoPlayer({  clip,
     }, 2500);
   }, [isPlaying]);
 
+  // 全屏狀態一律由事件驅動（手動呼叫後不直接 setState，因為呼叫可能失敗）。
+  // iOS 沒有 fullscreenchange，改聽 video 上的 webkitbegin/endfullscreen
+  // （iOS 原生播放器全屏只會觸發這兩個）。見 toggleFullscreen 的說明。
   useEffect(() => {
-    const handleFsChange = () => setIsFullscreen(!!document.fullscreenElement);
-    document.addEventListener('fullscreenchange', handleFsChange);
-    return () => document.removeEventListener('fullscreenchange', handleFsChange);
+    const doc = document as Document & { webkitFullscreenElement?: Element | null };
+    const v = videoRef.current as unknown as
+      | {
+          addEventListener: (type: string, fn: () => void) => void;
+          removeEventListener: (type: string, fn: () => void) => void;
+        }
+      | null;
+
+    const handleFsChange = () =>
+      setIsFullscreen(!!(doc.fullscreenElement ?? doc.webkitFullscreenElement));
+    const onBegin = () => setIsFullscreen(true);
+    const onEnd = () => setIsFullscreen(false);
+
+    doc.addEventListener('fullscreenchange', handleFsChange);
+    doc.addEventListener('webkitfullscreenchange', handleFsChange);
+    v?.addEventListener('webkitbeginfullscreen', onBegin);
+    v?.addEventListener('webkitendfullscreen', onEnd);
+
+    return () => {
+      doc.removeEventListener('fullscreenchange', handleFsChange);
+      doc.removeEventListener('webkitfullscreenchange', handleFsChange);
+      v?.removeEventListener('webkitbeginfullscreen', onBegin);
+      v?.removeEventListener('webkitendfullscreen', onEnd);
+    };
   }, []);
 
   // 元件卸載時清掉手勢計時器。

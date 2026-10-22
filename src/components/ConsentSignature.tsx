@@ -28,13 +28,15 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
   // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
   const [wrapRef, formHeight] = useFormHeight(consentHeightForWidth, consentHeightForWidth(768));
   const participant = useParticipant();
-  const [src, setSrc] = useState(FORM_SRC);
+  // participant 就緒前保持 null：iframe 只會用帶 prefill 的網址載入「一次」（原因見下方渲染處註解）
+  const [src, setSrc] = useState<string | null>(null);
 
   // 送出後停留一下讓參與者看到「已成功遞交」，再自動前往前測。
   const handleSubmitted = useAutoAdvance(onNext);
 
   // 把 Participant ID / Group 帶進同意書表單（表單需先有這兩個簡答題）。
   useEffect(() => {
+    if (!participant) return; // participant 就緒才產生 src（原因見下方渲染處註解）
     setSrc(buildPrefill(FORM_SRC, 'consentSignature', participant));
   }, [participant]);
 
@@ -61,13 +63,25 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
       {/* Google Form iframe（高度依寬度自適應）。
           pages 由 CONSENT_FORM_PAGES 決定；合併成單頁後就會自動收合 + 自動進入前測。 */}
       <div ref={wrapRef} className="w-full max-w-3xl">
-        <GoogleFormEmbed
-          src={src}
-          height={formHeight}
-          title="Consent to Participate in Research"
-          pages={CONSENT_FORM_PAGES}
-          onSubmitted={handleSubmitted}
-        />
+        {/* ⚠️ src 為 null（participant 未就緒）時刻意**不掛 iframe**。原因見 PreTest1.tsx
+            的同位置註解：先掛無 prefill 網址再換 src，會在聯合 session history 多生
+            entry，參與者按「返回」會把 iframe 導回沒有 prefill 的網址。 */}
+        {src ? (
+          <GoogleFormEmbed
+            src={src}
+            height={formHeight}
+            title="Consent to Participate in Research"
+            pages={CONSENT_FORM_PAGES}
+            onSubmitted={handleSubmitted}
+          />
+        ) : (
+          // 佔位卡片：撐住表單高度，避免 participant 就緒的一瞬間版面跳動
+          <div
+            className="w-full bg-white rounded-2xl border border-[rgba(198,168,248,0.18)] shadow-2xl"
+            style={{ height: formHeight }}
+            aria-label="表單載入中 Form loading"
+          />
+        )}
       </div>
 
       {/* 表單下方的小提示（不擋 StepFooter）。

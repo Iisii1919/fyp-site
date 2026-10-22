@@ -21,9 +21,45 @@
 
 const STORAGE_KEY = 'fyp_progress';
 
-/** 讀取上次未完成的步驟；沒有、或值不合理就回 null。 */
+// 「這一場已經做完」的標記。由 clearParticipant()（完成頁掛載／研究者 ?new=1）設定，
+// 由 assignParticipant() 發出新編號時清除。
+//
+// 為什麼需要（2026-10-22）：網站接入 History API 之後，參與者在完成頁按「返回」
+// 會回到後測問卷（step 9）—— 沒有這個標記的話，saveProgress(9) 會把進度重新寫回去，
+// 下一次開站就對「已完成的人」跳出無意義的接續提示。
+const DONE_KEY = 'fyp_done';
+
+export function markSessionDone(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(DONE_KEY, '1');
+  } catch {
+    // ignore
+  }
+}
+
+export function isSessionDone(): boolean {
+  if (typeof window === 'undefined') return false;
+  try {
+    return window.localStorage.getItem(DONE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+export function clearSessionDone(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.removeItem(DONE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** 讀取上次未完成的步驟；沒有、值不合理、或上一場已完成就回 null。 */
 export function readProgress(): number | null {
   if (typeof window === 'undefined') return null;
+  if (isSessionDone()) return null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -41,6 +77,9 @@ export function readProgress(): number | null {
  */
 export function saveProgress(step: number): void {
   if (typeof window === 'undefined') return;
+  // 上一場已標記完成（完成頁按返回走回問卷頁）→ 不再寫進度，
+  // 否則下一場開站會對已完成的人跳接續提示。
+  if (isSessionDone()) return;
   try {
     if (!Number.isInteger(step) || step <= 0) {
       window.localStorage.removeItem(STORAGE_KEY);

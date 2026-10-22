@@ -99,8 +99,13 @@ export default function Hero({ onMouseMove }: HeroProps) {
           一旦內容比這個高度高（例如標題多了一行），`items-center` 會讓內容**上下都溢出**，
           而 `overflow-hidden` 把上面那半**永久裁掉、連捲動都到不了** ——
           實測手機 390×844 時整行「Sadness Film」完全不見。
-          → 改成 `min-h-`，內容變高時容器跟著長高（頁面正常捲動），永遠不會有東西被藏起來。 */}
-      <div className="hero-rhythm relative z-10 min-h-[calc(100vh-112px)] w-full flex items-center justify-center">
+          → 改成 `min-h-`，內容變高時容器跟著長高（頁面正常捲動），永遠不會有東西被藏起來。
+
+          🔴 2026-10-22 追加 `pb-28`（= 112px = StepFooter 的高度）：
+          內容比視窗高、參與者捲到底時，最後一行「整個流程約需 30 分鐘…」會被
+          absolute bottom-0 的「Next · 下一頁」按鈕壓住（手機版實測回報）。
+          底部先留 112px，按鈕永遠只落在留白區，不碰文字。 */}
+      <div className="hero-rhythm relative z-10 min-h-[calc(100vh-112px)] w-full flex items-center justify-center pb-28">
       <motion.div
         variants={containerVariants}
         initial="hidden"

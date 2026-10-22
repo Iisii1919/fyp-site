@@ -504,10 +504,10 @@ function VideoPlayer({  clip,
           {/* 控制按鈕行 */}
           <div className="flex items-center justify-between px-3 py-2">
             <div className="flex items-center gap-3">
-              {/* 播放/暫停 */}
+              {/* 播放/暫停（shrink-0：窄播放器時按鈕不可被壓縮，否則圖示會被擠沒） */}
               <button
                 onClick={togglePlay}
-                className="w-8 h-8 flex items-center justify-center text-white hover:scale-110 transition-transform"
+                className="w-8 h-8 shrink-0 flex items-center justify-center text-white hover:scale-110 transition-transform"
               >
                 {isPlaying ? (
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
@@ -517,7 +517,7 @@ function VideoPlayer({  clip,
               </button>
 
               {/* 音量控制 */}
-              <div className="flex items-center gap-2 group/volume">
+              <div className="flex items-center gap-2 group/volume shrink-0">
                 <button
                   onClick={toggleMute}
                   className="w-8 h-8 flex items-center justify-center text-white hover:scale-110 transition-transform"
@@ -549,18 +549,21 @@ function VideoPlayer({  clip,
               </div>
 
               {/* 時間顯示 */}
-              <span className="text-white/90 text-xs font-medium tabular-nums">
+              <span className="text-white/90 text-xs font-medium tabular-nums whitespace-nowrap shrink-0">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
             </div>
 
             <div className="flex items-center gap-2">
               {/* 標題 */}
-              <span className="text-white/70 text-xs font-medium truncate max-w-[200px] hidden sm:block">{clip.title} · {clip.titleZh}</span>
+              {/* 標題：min-w-0 讓 truncate 真的生效（flex 子項預設 min-width:auto，
+                  內容縮不下去）。窄播放器時標題先讓位，全屏鈕才不會被擠出容器外
+                  （2026-10-22 iPad 真機回報：只剩標題文字、放大鈕消失）。 */}
+              <span className="text-white/70 text-xs font-medium truncate max-w-[200px] min-w-0 hidden sm:block">{clip.title} · {clip.titleZh}</span>
               {/* 全屏 */}
               <button
                 onClick={toggleFullscreen}
-                className="w-8 h-8 flex items-center justify-center text-white hover:scale-110 transition-transform"
+                className="w-8 h-8 shrink-0 flex items-center justify-center text-white hover:scale-110 transition-transform"
                 title={isFullscreen ? 'Exit Fullscreen / 退出全屏' : 'Fullscreen / 全屏'}
               >
                 {isFullscreen ? (
@@ -664,7 +667,7 @@ function VideoPlayer({  clip,
 
   return (
     <div
-      className="min-h-screen w-full flex items-center justify-center relative scroll-snap-start"
+      className="min-h-screen w-full flex items-center justify-center relative scroll-snap-start py-10 lg:py-0"
       style={{ background: index % 2 === 0
         ? 'radial-gradient(ellipse at 30% 50%, #545454 0%, #4a4a4a 60%, #3d3d3d 100%)'
         : 'radial-gradient(ellipse at 70% 50%, #565656 0%, #4a4a4a 60%, #3d3d3d 100%)'
@@ -694,11 +697,16 @@ function VideoPlayer({  clip,
           <lg（手機、平板直立）改為上下堆疊——文字全寬在上、影片全寬在下。
           🔴 2026-10-21 修正：之前所有寬度都是 flex-row，手機 390px 扣掉
           px-12 與 gap-12 後文字欄只剩 ~150px，英文一個字一行、影片縮成
-          郵票大小（使用者在真機回報）。堆疊後兩欄都是全寬。 */}
+          郵票大小（使用者在真機回報）。堆疊後兩欄都是全寬。
+          🔴 2026-10-22：md 的左右 padding 由 16 縮到 10（iPad 直立 820px 時
+          影片由 ~692px 加寬到 ~740px，使用者要求「視頻邊框放大一些」）。 */}
       {
-        <div className="w-full lg:w-[84%] lg:ml-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-12 px-6 sm:px-10 md:px-16 lg:px-24 relative z-10">
-          {/* 文字欄：標題 + 描述 */}
-          <div className={`w-full lg:flex-1 lg:max-w-lg order-1 ${textOnLeft ? 'lg:order-1' : 'lg:order-2'}`}>
+        <div className="w-full lg:w-[84%] lg:ml-auto flex flex-col lg:flex-row items-center gap-8 lg:gap-12 px-6 sm:px-10 md:px-10 lg:px-24 relative z-10">
+          {/* 文字欄：標題 + 描述。
+              堆疊時（<lg）用 max-w-2xl 收斂行寬並隨 items-center 置中——
+              全寬的 700px+ 長行很難讀，而且文字區比影片窄一點、視覺上影片更大
+              （2026-10-22 使用者要求 iPad 版「視頻邊框放大一些」）。 */}
+          <div className={`w-full max-w-2xl lg:flex-1 lg:max-w-lg order-1 ${textOnLeft ? 'lg:order-1' : 'lg:order-2'}`}>
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               whileInView={{ opacity: 1, y: 0 }}

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import Hero from '@/components/Hero';
 import EligibilityScreening from '@/components/EligibilityScreening';
@@ -60,6 +60,22 @@ export default function Home() {
   // saveProgress(0) 會把要接續的進度清掉。
   const [progressLoaded, setProgressLoaded] = useState(false);
 
+  // ---- 瀏覽器返回鍵整合（2026-10-22）----
+  // 背景：本站是單頁 wizard（URL 永遠是 /）。以往按「返回」會直接離開網站；
+  // 而且表單 iframe 換 src 會在聯合 session history 留下 entry，返回會先把
+  // iframe 導回舊網址（prefill 消失、表單被誤判送出）。現在每進入一步就 push
+  // 一條 history entry，popstate 時對回對應步驟 —— 返回 = 上一步，不再離站。
+  /** bfcache 恢復計數：當 key 用，強制重掛目前步驟（iframe／影片可能已被凍結壞掉） */
+  const [navEpoch, setNavEpoch] = useState(0);
+  /** 本次 step 改變來自 popstate 時為 true —— 不再重複 pushState */
+  const popNavRef = useRef(false);
+  /** 最近一次已寫進 history 的步驟：避免 progressLoaded／resumeAt 翻轉造成重複 push */
+  const lastPushedRef = useRef(0);
+  /** 這個 session 到過的最遠步驟：擋住「重新開始後按返回回到上一場的步驟」 */
+  const maxStepRef = useRef(0);
+  /** popstate handler 只註冊一次，但要讀到最新的 step */
+  const stepRef = useRef(0);
+
   const goNext = useCallback(() => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)), []);
 
   // 研究員專用逃生鍵（Shift + Alt + N）：所有自動跳轉都失效時，當場把場次救回來。
@@ -75,12 +91,77 @@ export default function Home() {
     setProgressLoaded(true);
   }, []);
 
+  // 掛載時：把目前這條 history entry 標上 fypStep:0，並接管 popstate / bfcache 恢復。
+  useEffect(() => {
+    try {
+      window.history.replaceState({ ...(window.history.state ?? {}), fypStep: 0 }, '');
+      // 步驟切換時我們自己捲回頂部（下方另一個 effect），不要瀏覽器的捲動還原插手
+      window.history.scrollRestoration = 'manual';
+    } catch {
+      // 極少數環境禁止觸碰 history —— 降級為無返回整合，不影響主流程
+    }
+
+    const onPopState = (e: PopStateEvent) => {
+      const raw = (e.state as { fypStep?: unknown } | null)?.fypStep;
+      const target =
+        typeof raw === 'number' && Number.isInteger(raw)
+          ? Math.max(0, Math.min(TOTAL_STEPS - 1, raw))
+          : 0;
+      // 「重新開始」後歷史裡仍留著上一場的 entry；回到比本次最遠步驟更後面的位置
+      // 會跳過同意書等必要步驟 → 擋下，重新壓回目前步驟。
+      if (target > maxStepRef.current) {
+        try {
+          window.history.pushState({ ...(window.history.state ?? {}), fypStep: stepRef.current }, '');
+        } catch {
+          // ignore
+        }
+        return;
+      }
+      popNavRef.current = true;
+      // 接續提示若還開著，返回鍵視同「直接去那一步」（關掉提示）
+      setResumeAt(null);
+      setStep(target);
+    };
+
+    const onPageShow = (e: PageTransitionEvent) => {
+      // 從 bfcache 恢復：React state 原樣回來，但 Google 表單 iframe／影片很可能
+      // 已被凍結壞掉（手機 Chrome／Safari 的已知行為）→ 重掛目前步驟救回來。
+      if (e.persisted) setNavEpoch((n) => n + 1);
+    };
+
+    window.addEventListener('popstate', onPopState);
+    window.addEventListener('pageshow', onPageShow);
+    return () => {
+      window.removeEventListener('popstate', onPopState);
+      window.removeEventListener('pageshow', onPageShow);
+    };
+  }, []);
+
   // 記錄目前步驟。等使用者回答完接續提示才開始寫，否則會蓋掉要接續的值。
   useEffect(() => {
     if (!progressLoaded || resumeAt !== null) return;
     // 最後一步（完成頁）不需要接續，存 0 等於清除
     saveProgress(step >= TOTAL_STEPS - 1 ? 0 : step);
   }, [step, resumeAt, progressLoaded]);
+
+  // 每進入新的一步就 push 一條 history entry（popstate 造成的改變不重複 push）。
+  useEffect(() => {
+    stepRef.current = step;
+    if (step > maxStepRef.current) maxStepRef.current = step;
+    if (!progressLoaded || resumeAt !== null) return;
+    if (popNavRef.current) {
+      popNavRef.current = false;
+      lastPushedRef.current = step;
+      return;
+    }
+    if (lastPushedRef.current === step) return;
+    lastPushedRef.current = step;
+    try {
+      window.history.pushState({ ...(window.history.state ?? {}), fypStep: step }, '');
+    } catch {
+      // ignore（見上方 mount effect）
+    }
+  }, [step, progressLoaded, resumeAt]);
 
   const handleResume = useCallback(() => {
     if (resumeAt !== null) setStep(resumeAt);
@@ -180,16 +261,24 @@ export default function Home() {
       if (target !== undefined) tweenTo(target);
     };
 
+    // bfcache 恢復時若吸附動畫旗標卡在 true（頁面被凍結時動畫正在跑），
+    // 整頁滾動會被下面的 preventDefault 永久鎖死 —— 恢復時重置旗標。
+    const onPageShow = (e: PageTransitionEvent) => {
+      if (e.persisted) animating = false;
+    };
+
     window.addEventListener('wheel', onWheel, { passive: false });
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchmove', onTouchMove, { passive: true });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
+    window.addEventListener('pageshow', onPageShow);
 
     return () => {
       window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchmove', onTouchMove);
       window.removeEventListener('touchend', onTouchEnd);
+      window.removeEventListener('pageshow', onPageShow);
     };
   }, []);
 
@@ -213,6 +302,10 @@ export default function Home() {
             onRestart={handleRestart}
           />
         )}
+
+        {/* key = navEpoch：bfcache 恢復時整棵步驟子樹重掛（表單 iframe／影片凍結後復原）。
+            display:contents 讓這層 wrapper 不產生任何版面影響。 */}
+        <div key={navEpoch} className="contents">
 
         {step === 0 && (
           <section className="relative w-full no-snap">
@@ -330,6 +423,7 @@ export default function Home() {
             <StepFooter />
           </section>
         )}
+        </div>
       </main>
     </ParticipantProvider>
   );

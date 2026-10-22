@@ -280,6 +280,20 @@ check('Hero 地標', /傷感電影與心理韌性/.test(await bodyText() || ''))
 check('Hero 無水平溢出', (await overflowPx()) <= 1, `overflow=${await overflowPx()}`);
 await sleep(2200); // Hero 進場動畫是交錯淡入，等跑完再截圖
 await shot('00-hero');
+// Hero 捲到底：Next 鈕不得壓到最後一行文字（2026-10-22 手機版實測重曡回報）
+await ev('window.scrollTo(0, document.documentElement.scrollHeight)');
+await sleep(900);
+await shot('00b-hero-bottom');
+const heroOverlap = await ev(`(() => {
+  const btn = [...document.querySelectorAll('button')].find((b) => (b.innerText || '').includes('下一頁'));
+  const txt = [...document.querySelectorAll('p')].find((p) => (p.innerText || '').includes('整個流程約需'));
+  if (!btn || !txt) return { overlap: 'missing' };
+  const b = btn.getBoundingClientRect(), t = txt.getBoundingClientRect();
+  return { overlap: b.top < t.bottom && b.bottom > t.top && b.left < t.right && b.right > t.left, bTop: Math.round(b.top), tBottom: Math.round(t.bottom) };
+})()`);
+check('Hero 捲到底時 Next 鈕不壓文字', !!heroOverlap && heroOverlap.overlap === false, JSON.stringify(heroOverlap));
+await ev('window.scrollTo(0, 0)');
+await sleep(400);
 if (TOUCH) {
   check('Hero 用觸控輕點前進', await tapCenterOf('button', 'Next · 下一頁'));
 } else {
@@ -353,6 +367,20 @@ check('同意書頁地標', /同意書簽署|Consent Form/.test(await bodyText()
 await checkFormIframes('同意書', 1);
 check('同意書頁無水平溢出', (await overflowPx()) <= 1, `overflow=${await overflowPx()}`);
 await shot('03-consent-form');
+// --- 返回鍵測試（2026-10-22 新增）---
+// 歷史病案：以往按返回會直接離站；表單 iframe 換 src 留下的聯合 history entry
+// 會先把 iframe 導回無 prefill 的網址（Participant ID 消失、表單被誤判送出）。
+// 現在應該：返回 = 上一步（研究資訊頁），前進 = 回到同意書且 prefill 完好。
+await ev('window.history.back()');
+await sleep(1200);
+t = await bodyText() || '';
+check('返回鍵 → 回到研究資訊頁（不離站）', /Information Sheet|有關資料/.test(t), t.slice(0, 50));
+check('返回後參與者編號不變', (await ev(`localStorage.getItem('fyp_participant')`)) === pid);
+await ev('window.history.forward()');
+await sleep(1500);
+check('前進鍵 → 回到同意書頁', /同意書簽署|Consent Form/.test(await bodyText() || ''));
+const backOk = await waitFor('同意書 iframe 重新掛載', `[...document.querySelectorAll('iframe')].some((f) => f.src.includes('entry.'))`, 10000);
+check('返回-前進後 iframe 帶 prefill 重生', backOk);
 await escapeNext();
 await waitFor('進入前測', `document.body.innerText.includes('生命意義感量表')`, 8000);
 
@@ -427,6 +455,16 @@ check('影片頁無水平溢出', (await overflowPx()) <= 1, `overflow=${await o
 await ev(`window.scrollBy(0, Math.round(window.innerHeight * 1.05))`);
 await sleep(1800);
 await shot('06b-clip-layout');
+// 全屏鈕必須真的「看得到」（2026-10-22 iPad 回報：被標題擠出容器外而消失）
+const fsVisible = await ev(`(() => {
+  const btn = [...document.querySelectorAll('button')].find((b) => (b.title || '').includes('Fullscreen'));
+  if (!btn) return 'not-found';
+  const r = btn.getBoundingClientRect();
+  const host = btn.closest('div.group');
+  const hr = host ? host.getBoundingClientRect() : null;
+  return r.width >= 20 && r.height >= 20 && (!hr || r.right <= hr.right + 1);
+})()`);
+check('影片全屏鈕可見且未被擠出容器', fsVisible === true, String(fsVisible));
 await clickByText('button', 'Next · 下一頁');
 await waitFor('進入觀影回饋', `document.body.innerText.includes('回饋') || document.body.innerText.includes('Feedback') || document.querySelectorAll('iframe').length >= 1`, 8000);
 

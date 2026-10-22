@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { clearProgress } from './progress';
+import { clearProgress, markSessionDone, clearSessionDone } from './progress';
 
 export type Group = 'sadness' | 'neutral';
 
@@ -61,6 +61,9 @@ export function assignParticipant(): Participant {
     id: generateId(),
     group: Math.random() < 0.5 ? 'sadness' : 'neutral',
   };
+  // 發出新編號 = 新場次開始 → 清掉「上一場已完成」標記，進度記錄恢復運作。
+  // （順序沒有衝突：上一場若是正常完成，完成頁的 clearParticipant 已設過標記。）
+  clearSessionDone();
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(participant));
   } catch {
@@ -97,6 +100,9 @@ export function clearParticipant(): void {
     // ignore
   }
   clearProgress();
+  // 標記「這一場結束了」：完成頁按返回走回前面的步驟時，saveProgress 不會再寫，
+  // 下一場開站也不會跳出接續提示。新編號發出時（assignParticipant）會清掉它。
+  markSessionDone();
 }
 
 /**

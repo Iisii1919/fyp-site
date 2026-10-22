@@ -184,9 +184,32 @@ export default function Home() {
     window.scrollTo({ top: 0, behavior: 'auto' });
   }, [step]);
 
+  /**
+   * 是否啟用自訂垂直吸附。
+   *
+   * 🔴 2026-10-22 使用者兩次回報後定案：**手機不啟用**。
+   *    原因：影片段落是 `min-h-screen`，但文字長的時候整段會**比螢幕高**，
+   *    影片與它的控制條（含全屏鈕）被推到畫面外；而吸附在滑動結束時會直接跳到
+   *    **下一個吸附點**（＝下一段影片的開頭），導致參與者**根本捲不到這一段的影片**。
+   *    桌面（≥lg）是左右分欄、一屏放得下，吸附才是有意義的，所以只在那裡啟用。
+   *
+   * ⚠️ 用 matchMedia + change 監聽，而不是掛載時只看一次 —— 旋轉手機、
+   *    或把視窗拉大／縮小才會跟著切換。
+   */
+  const [snapEnabled, setSnapEnabled] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 1024px)');
+    const update = () => setSnapEnabled(mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  }, []);
+
   // 自訂垂直吸附：只影響目前顯示的步驟內容。wizard 模式下主要用在影片步驟內
   // 片段之間的吸附；問卷步驟無吸附點 → 自由滾動。
   useEffect(() => {
+    // 手機／平板直立：不啟用（原因見上面 snapEnabled 的說明）
+    if (!snapEnabled) return;
     const SNAP_DURATION = 800;
     let animating = false;
 
@@ -280,7 +303,7 @@ export default function Home() {
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('pageshow', onPageShow);
     };
-  }, []);
+  }, [snapEnabled]);
 
   const handleVideoProgress = useCallback((progress: number) => {
     setVideoProgress(progress);

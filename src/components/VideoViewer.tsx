@@ -576,8 +576,8 @@ function VideoPlayer({  clip,
           </div>
 
           {/* 控制按鈕行 */}
-          <div className="flex items-center justify-between px-3 py-2">
-            <div className="flex items-center gap-3">
+          <div className="flex items-center px-3 py-2">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
               {/* 播放/暫停（shrink-0：窄播放器時按鈕不可被壓縮，否則圖示會被擠沒） */}
               <button
                 onClick={togglePlay}
@@ -587,6 +587,27 @@ function VideoPlayer({  clip,
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M6 4h4v16H6zM14 4h4v16h-4z" /></svg>
                 ) : (
                   <svg className="w-5 h-5 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                )}
+              </button>
+
+              {/* 全屏
+                  🔴 2026-10-22：刻意放在**播放鈕後面（第 2 個）**，不是控制條右端。
+                  原因：Netlify 免費方案會在畫面右下角注入固定的「Powered by Netlify」
+                  徽章（實測約 180×52px，橫向佔到 x≈198 起）。手機上播放器常常貼在
+                  畫面底部，徽章就蓋住控制條右端的全屏鈕 → 使用者按不到（兩次真機回報）。
+                  放在第 2 個位置（x≈76–108）就完全離開徽章的水平範圍，不論捲到哪裡都安全。
+                  ⚠️ 不要移回右邊或第 3 個位置之後 —— 第 3 個位置起就會與徽章重疊。
+                  ⚠️ 控制條上的片名同樣已在 2026-10-22 移除（它會把全屏鈕擠出播放器），
+                     不要加回來 —— 片名在影片旁邊已經有一個很大的 h2 了。 */}
+              <button
+                onClick={toggleFullscreen}
+                className="w-8 h-8 shrink-0 flex items-center justify-center text-white hover:scale-110 transition-transform"
+                title={isFullscreen ? 'Exit Fullscreen / 退出全屏' : 'Fullscreen / 全屏'}
+              >
+                {isFullscreen ? (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" /></svg>
+                ) : (
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
                 )}
               </button>
 
@@ -606,7 +627,7 @@ function VideoPlayer({  clip,
                 </button>
                 <div
                   ref={volumeBarRef}
-                  className="w-20 h-2 bg-white/25 rounded-full cursor-pointer overflow-hidden relative flex-shrink-0"
+                  className="w-14 sm:w-20 h-2 bg-white/25 rounded-full cursor-pointer overflow-hidden relative flex-shrink-0"
                   onPointerDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -626,30 +647,6 @@ function VideoPlayer({  clip,
               <span className="text-white/90 text-xs font-medium tabular-nums whitespace-nowrap shrink-0">
                 {formatTime(currentTime)} / {formatTime(duration)}
               </span>
-            </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              {/* 🔴 控制條上的片名已在 2026-10-22 移除，不要加回來。
-                  原因（實測，不是猜）：左邊那組（播放＋音量＋時間）全是 shrink-0，
-                  右邊若再放片名，控制條需要約 416px；但 iPad 左右分欄時播放器只有
-                  約 306px 寬 → 全屏鈕被推到播放器右邊界外 110px
-                  （實測 fsOverflowRight = 110px、fsInsidePlayer = false），
-                  而播放器是 overflow-hidden，所以全屏鈕看不到也按不到（使用者真機回報）。
-                  片名在影片旁邊已經有一個很大的 h2，控制條這個是重複的，
-                  因此對**所有影片**統一移除（同一個元件，自然一致）。
-                  ⚠️ 若日後想放回，必須先確保播放器夠寬，否則同一問題會再出現。 */}
-              {/* 全屏 */}
-              <button
-                onClick={toggleFullscreen}
-                className="w-8 h-8 shrink-0 flex items-center justify-center text-white hover:scale-110 transition-transform"
-                title={isFullscreen ? 'Exit Fullscreen / 退出全屏' : 'Fullscreen / 全屏'}
-              >
-                {isFullscreen ? (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 9V4.5M9 9H4.5M9 9L3.75 3.75M9 15v4.5M9 15H4.5M9 15l-5.25 5.25M15 9h4.5M15 9V4.5M15 9l5.25-5.25M15 15h4.5M15 15v4.5m0-4.5l5.25 5.25" /></svg>
-                ) : (
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg>
-                )}
-              </button>
             </div>
           </div>
         </motion.div>

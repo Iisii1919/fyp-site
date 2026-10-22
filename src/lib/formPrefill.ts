@@ -17,6 +17,18 @@ export interface FormPrefillFields {
   participantId?: string;
   // "Group" 簡答題的 entry 編號（全部 5 份表單，含兩份前測）。
   group?: string;
+  /**
+   * 「簽署日期」這種 **DATE 題型**的 entry 編號。
+   *
+   * ⚠️ DATE 題型的預填參數跟簡答題不一樣：不是 `entry.X=值`，而是拆成三個
+   * `entry.X_year` / `entry.X_month` / `entry.X_day`（month 是 1–12，不是 0-based）。
+   * 2026-10-22 實測：帶 `_year=2026&_month=10&_day=22` → 表單裡確實出現 2026-10-22。
+   *
+   * 為什麼要預填：Google Forms 的 DATE 題在**手機／iPad 上會被拆成「日 / 月 / 年」
+   * 三個數字輸入框，沒有日曆**（桌面版才有日曆）。參與者要一格一格打，很容易打錯。
+   * 預填之後他們完全不用碰這個欄位。
+   */
+  date?: string;
 }
 
 // ⚠️ 表單「Group」欄位寫入的代碼，刻意不用 sadness / neutral。
@@ -43,7 +55,7 @@ function entryKey(id: string): string {
 // 因此 Participant ID / Group 的 entry 編號兩份完全相同 —— 這很正常，
 // 但分析時務必靠「表單來源（回應分頁）」區分前後測，不要只看編號。
 export const FORM_PREFILL: Record<string, FormPrefillFields> = {
-  consentSignature: { participantId: 'entry.796871681', group: 'entry.674025608' },
+  consentSignature: { participantId: 'entry.796871681', group: 'entry.674025608', date: 'entry.99830804' },
   preTest1: { participantId: 'entry.553754490', group: 'entry.646478281' },
   preTest2: { participantId: 'entry.225204019', group: 'entry.2096796238' },
   preTestErq: { participantId: 'entry.1372470842', group: 'entry.1789914533' },
@@ -55,12 +67,31 @@ export const FORM_PREFILL: Record<string, FormPrefillFields> = {
 
 // Returns `baseSrc` with prefill params appended, or `baseSrc` unchanged when no IDs are set
 // or no participant is available yet.
-export function buildPrefill(baseSrc: string, formKey: string, p: Participant | null): string {
+export function buildPrefill(
+  baseSrc: string,
+  formKey: string,
+  p: Participant | null,
+  /** 要預填的簽署日期，格式 `YYYY-MM-DD`。不給就不填（維持原本行為）。 */
+  dateISO?: string,
+): string {
   const fields = FORM_PREFILL[formKey];
   if (!p || !fields) return baseSrc;
   const params = new URLSearchParams();
   if (fields.participantId) params.set(entryKey(fields.participantId), p.id);
   if (fields.group) params.set(entryKey(fields.group), GROUP_CODE[p.group]);
+
+  // DATE 題型要拆成 _year / _month / _day 三個參數（見 FormPrefillFields.date）。
+  // ⚠️ 刻意用字串切分而不是 Date 物件 —— 避免時區把「今天」算成昨天或明天。
+  if (fields.date && dateISO) {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateISO);
+    if (m) {
+      const key = entryKey(fields.date);
+      params.set(`${key}_year`, String(Number(m[1])));
+      params.set(`${key}_month`, String(Number(m[2]))); // 1–12，不是 0-based
+      params.set(`${key}_day`, String(Number(m[3])));
+    }
+  }
+
   const query = params.toString();
   return query ? `${baseSrc}&${query}` : baseSrc;
 }

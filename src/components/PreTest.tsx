@@ -7,6 +7,11 @@ import PreTestErq from './PreTestErq';
 import StepFooter from './StepFooter';
 import QuestionnaireProgress from './QuestionnaireProgress';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
+import { useParticipant } from '@/lib/participant';
+import { isSubmitted } from '@/lib/submissions';
+
+// 三份前測在 submissions 標記裡的代號，順序與下面 render 的順序一致。
+const FORM_KEYS = ['preTest1', 'preTest2', 'preTestErq'] as const;
 
 // 進度小工具顯示的標籤。用**量表全名**而不是編號。
 // ⚠️ 順序要跟下面 render 的順序一致：MLQ → CD-RISC-10 → ERQ。
@@ -40,8 +45,25 @@ export default function PreTest({ onNext }: PreTestProps) {
   const secondRef = useRef<HTMLDivElement>(null);
   const thirdRef = useRef<HTMLDivElement>(null);
   const trigger = useAutoAdvance(onNext);
+  const participant = useParticipant();
+
+  // 「三份都是從上次標記恢復的」= true。恢復回來的人多半是**按返回**回來的，
+  // 這時絕不能再自動往前跳，所以用它擋住下面的自動跳轉，改亮頁尾 Next 鈕。
+  const [restoredAll, setRestoredAll] = useState(false);
+
+  // participant 一到就查三份前測的已送出標記：送過的直接標完成（葉子表單
+  // 會跟著收合，不用再送一次）。只送過一部分也可以 —— 剩下沒送的這次照樣填，
+  // 補齊時 restoredAll 是 false，自動跳轉正常生效。
+  useEffect(() => {
+    if (!participant) return;
+    const restored = FORM_KEYS.map((k) => isSubmitted(participant.id, k));
+    if (restored.every(Boolean)) setRestoredAll(true);
+    setDone((prev) => prev.map((d, i) => d || restored[i]));
+  }, [participant]);
 
   const markDone = useCallback((index: number) => {
+    // 這次掛載有「真的送出」發生 → 不再是純恢復狀態
+    setRestoredAll(false);
     setDone((prev) => (prev[index] ? prev : prev.map((d, i) => (i === index ? true : d))));
     // 送出後把**下一份的開頭**帶到畫面上方。
     // ⚠️ 一定要等收合動畫跑完（GoogleFormEmbed 的高度轉場是 600ms）再捲。
@@ -62,13 +84,17 @@ export default function PreTest({ onNext }: PreTestProps) {
    * 必須把進度改回未提交，否則問卷會永久標成做完、甚至觸發自動跳頁。
    */
   const unmarkDone = useCallback((index: number) => {
+    // 有人把某份展開重填 → 已經不是「三份都恢復」的狀態了
+    setRestoredAll(false);
     setDone((prev) => (prev[index] ? prev.map((d, i) => (i === index ? false : d)) : prev));
   }, []);
 
-  // 三份都提交才排程跳轉（useAutoAdvance 內部保證只跳一次）
+  // 三份都提交才排程跳轉（useAutoAdvance 內部保證只跳一次）。
+  // ⚠️ 恢復回來（restoredAll）時不跳：按返回回來的人不該被直接推去下一步，
+  //    改用頁尾的 Next 鈕讓他自己按。
   useEffect(() => {
-    if (done.every(Boolean)) trigger();
-  }, [done, trigger]);
+    if (done.every(Boolean) && !restoredAll) trigger();
+  }, [done, trigger, restoredAll]);
 
   const jumpTo = useCallback((index: number) => {
     const el = [firstRef, secondRef, thirdRef][index]?.current;
@@ -98,7 +124,9 @@ export default function PreTest({ onNext }: PreTestProps) {
         <QuestionnaireProgress labels={LABELS} labelsEn={LABELS_EN} done={done} onJumpTo={jumpTo} />
       </div>
 
-      <StepFooter />
+      {/* 平時刻意不給 Next（防止跳過問卷）；只有三份都從上次標記恢復時，
+          才亮頁尾 Next 鈕讓按返回回來的人繼續。 */}
+      <StepFooter onNext={onNext} canNext={restoredAll} />
     </div>
   );
 }

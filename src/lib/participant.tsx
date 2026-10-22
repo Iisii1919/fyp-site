@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { clearProgress, markSessionDone, clearSessionDone } from './progress';
+import { clearSubmissions } from './submissions';
 
 export type Group = 'sadness' | 'neutral';
 
@@ -103,6 +104,10 @@ export function clearParticipant(): void {
   // 標記「這一場結束了」：完成頁按返回走回前面的步驟時，saveProgress 不會再寫，
   // 下一場開站也不會跳出接續提示。新編號發出時（assignParticipant）會清掉它。
   markSessionDone();
+  // 「哪幾份表單已送出」的標記也一併清掉（src/lib/submissions.ts）——
+  // 不清的話，同一台裝置的下一位參與者會看到表單都「已提交」的假象。
+  // （標記本身綁 participant id，這裡是雙保險。）
+  clearSubmissions();
 }
 
 /**

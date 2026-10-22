@@ -24,6 +24,16 @@ interface GoogleFormEmbedProps {
    * 父層應該把「已完成」取消掉。沒有這個，誤判就會把問卷永久標成做完。
    */
   onUnsubmit?: () => void;
+  /**
+   * 掛載時直接呈現「已送出」的收合狀態（2026-10-22）。
+   *
+   * 用在「這位參與者上次已經送過這份表單」的恢復情境（返回鍵／刷新回來，
+   * 標記存在 src/lib/submissions.ts）：不再要求重送，也不會重複觸發
+   * onSubmitted（fired 一開始就是 true，自動跳轉不會被重新點燃）。
+   * 只在掛載當下生效；之後 prop 改變不影響（一般送出的收合走路徑不變）。
+   * 參與者仍可按「展開繼續作答」撤銷 —— 那會走既有的 onUnsubmit 路徑。
+   */
+  startCollapsed?: boolean;
 }
 
 // 嵌入 Google Form 的白底卡片。
@@ -112,6 +122,7 @@ export default function GoogleFormEmbed({
   pages = 1,
   onSubmitted,
   onUnsubmit,
+  startCollapsed = false,
 }: GoogleFormEmbedProps) {
   // 一律走這個（已補 hl=en），下面所有地方都用它，確保 src 比較與 iframe 一致。
   const formSrc = ensureEnglishUI(src);
@@ -120,9 +131,11 @@ export default function GoogleFormEmbed({
   // 帶 prefill 的網址，iframe 因此會多載入一次。若把那一次算成送出，
   // 表單會在剛載入時就被收合。所以只有「src 沒變卻又 reload」才視為送出。
   const lastLoadedSrc = useRef<string | null>(null);
-  const fired = useRef(false);
+  // 恢復「已送出」時一開始就視同已點燃：不再重複觸發 onSubmitted（避免自動跳轉
+  // 在參與者按返回回來時又把他往前推）。
+  const fired = useRef(startCollapsed);
 
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(startCollapsed);
   const [loadFired, setLoadFired] = useState(false);
   /** null = 還在探測 / 無法判定；false = 確定連不到表單主機 */
   const [reachable, setReachable] = useState<boolean | null>(null);

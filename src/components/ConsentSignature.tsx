@@ -1,10 +1,11 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
+import { isSubmitted, markSubmitted } from '@/lib/submissions';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
 import { consentHeightForWidth } from '@/lib/formHeights';
 import { useFormHeight } from '@/lib/useFormHeight';
@@ -59,7 +60,18 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
   const [signDate, setSignDate] = useState('');
 
   // 送出後停留一下讓參與者看到「已成功遞交」，再自動前往前測。
-  const handleSubmitted = useAutoAdvance(onNext);
+  const triggerAdvance = useAutoAdvance(onNext);
+
+  // 「上次已送出」的恢復狀態：返回／刷新回到這頁時直接顯示收合完成態＋Next 鈕，
+  // 不再要求重送（資料已在 Google），也不重複自動跳轉把按返回的人又往前推
+  // （標記的存取見 src/lib/submissions.ts）。
+  const [restoredDone, setRestoredDone] = useState(false);
+
+  // 只有「這次掛載真的送出」才寫標記＋自動跳轉。
+  const handleSubmitted = useCallback(() => {
+    if (participant) markSubmitted(participant.id, 'consentSignature');
+    triggerAdvance();
+  }, [participant, triggerAdvance]);
 
   useEffect(() => {
     setSignDate(todayISO());
@@ -69,7 +81,10 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
   // ⚠️ 兩個條件都就緒才組網址 —— 這樣 iframe 只會用「完整 prefill」的網址載入一次，
   //    不會先載入一次沒有日期的版本（多一次載入＝多一個 history entry，見下方註解）。
   useEffect(() => {
-    if (!participant || !signDate) return;
+    if (!participant) return;
+    // 「上次已送出」的恢復標記與日期無關，participant 一到就查
+    setRestoredDone(isSubmitted(participant.id, 'consentSignature'));
+    if (!signDate) return;
     setSrc(buildPrefill(FORM_SRC, 'consentSignature', participant, signDate));
   }, [participant, signDate]);
 
@@ -101,7 +116,9 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
             會被拆成日／月／年三個數字框。`<input type="date">` 在手機上會叫出系統日曆，
             選好之後用預填帶進表單，參與者就不用碰那一題了。
             ⚠️ 改日期會讓下面的 iframe 重新載入（prefill 在網址上），
-               所以提示寫「先選好再開始填」，避免填到一半改日期而丟失內容。 */}
+               所以提示寫「先選好再開始填」，避免填到一半改日期而丟失內容。
+            恢復完成態（已送過）時不顯示：表單已收合，日期不用再選。 */}
+        {!restoredDone && (
         <div className="mb-4 px-1 flex flex-col sm:flex-row sm:items-center gap-x-4 gap-y-2">
           <label htmlFor="sign-date" className="shrink-0 leading-snug">
             <span className="block text-[#d4bfff] text-sm font-medium">Date of signature</span>
@@ -121,6 +138,7 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
             <span className="block">已填入下方表格，請先選好再開始填。</span>
           </span>
         </div>
+        )}
 
         {/* ⚠️ src 為 null（participant 未就緒）時刻意**不掛 iframe**。原因見 PreTest1.tsx
             的同位置註解：先掛無 prefill 網址再換 src，會在聯合 session history 多生
@@ -132,6 +150,7 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
             title="Consent to Participate in Research"
             pages={CONSENT_FORM_PAGES}
             onSubmitted={handleSubmitted}
+            startCollapsed={restoredDone}
           />
         ) : (
           // 佔位卡片：撐住表單高度，避免 participant 就緒的一瞬間版面跳動
@@ -145,11 +164,38 @@ export default function ConsentSignature({ onNext }: ConsentSignatureProps) {
 
       {/* 表單下方的小提示（不擋 StepFooter）。
           表單合併成單頁後，簽名也在同一頁，所以不再有「下一頁」可以輸入姓名。 */}
-      <p className="text-[#8a8a8a] text-xs mt-4 mb-24 text-center">
-        After you submit, you will automatically continue to the pre-test questionnaires — no need to press any other button.
-        <br />
-        遞交後會自動繼續前往前測問卷，不需要再按其他按鈕。
+      <p className={`text-[#8a8a8a] text-xs mt-4 text-center ${restoredDone ? '' : 'mb-24'}`}>
+        {restoredDone ? (
+          <>
+            You have already submitted this form — press “Next · 下一頁” to continue.
+            <br />
+            你已提交過這份同意書，按「下一頁」即可繼續。
+          </>
+        ) : (
+          <>
+            After you submit, you will automatically continue to the pre-test questionnaires — no need to press any other button.
+            <br />
+            遞交後會自動繼續前往前測問卷，不需要再按其他按鈕。
+          </>
+        )}
       </p>
+
+      {/* 已送過的人按返回／刷新回來：給一顆明確的「下一頁」，不用再送一次。
+          平時刻意沒有這顆按鈕（防止跳過同意書），只有恢復完成態才出現。 */}
+      {restoredDone && onNext && (
+        <button
+          type="button"
+          onClick={onNext}
+          className="mt-4 mb-24 inline-flex items-center gap-3 px-7 py-3 rounded-full border border-[rgba(198,168,248,0.45)] bg-[rgba(198,168,248,0.12)] text-[#d4bfff] hover:bg-[rgba(198,168,248,0.24)] hover:border-[rgba(198,168,248,0.8)] transition-colors"
+        >
+          <span className="text-sm md:text-base font-medium tracking-wide whitespace-nowrap">
+            Next · 下一頁
+          </span>
+          <svg className="w-5 h-5 md:w-6 md:h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

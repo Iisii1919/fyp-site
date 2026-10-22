@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
+import { markSubmitted, unmarkSubmitted } from '@/lib/submissions';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 import { postTest2HeightForWidth } from '@/lib/formHeights';
 import { useFormHeight } from '@/lib/useFormHeight';
@@ -32,6 +33,17 @@ export default function PostTest2({ submitted = false, onSubmitted, onUnsubmit }
     if (!participant) return; // participant 就緒才產生 src（原因見下方渲染處註解）
     setSrc(buildPrefill(FORM_SRC, 'postTest2', participant));
   }, [participant]);
+
+  // 送出／撤銷時同步寫入持久化標記：返回或刷新回到這頁就不用重送（見 submissions.ts）。
+  // 只有「這次掛載真的偵測到送出」才會走到這裡；恢復的完成態不會重複觸發。
+  const handleSubmitted = useCallback(() => {
+    if (participant) markSubmitted(participant.id, 'postTest2');
+    onSubmitted?.();
+  }, [participant, onSubmitted]);
+  const handleUnsubmit = useCallback(() => {
+    if (participant) unmarkSubmitted(participant.id, 'postTest2');
+    onUnsubmit?.();
+  }, [participant, onUnsubmit]);
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center px-4 py-12 relative" style={{ background: 'radial-gradient(ellipse at 50% 0%, #545454 0%, #3d3d3d 50%, #3d3d3d 100%)' }}>
@@ -78,8 +90,9 @@ export default function PostTest2({ submitted = false, onSubmitted, onUnsubmit }
             src={src}
             height={formHeight}
             title="Post-Test: CD-RISC-10"
-            onSubmitted={onSubmitted}
-            onUnsubmit={onUnsubmit}
+            onSubmitted={handleSubmitted}
+            onUnsubmit={handleUnsubmit}
+            startCollapsed={submitted}
           />
         ) : (
           // 佔位卡片：撐住表單高度，避免 participant 就緒的一瞬間版面跳動

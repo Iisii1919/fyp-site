@@ -409,7 +409,16 @@ if (TOUCH) {
   check('問卷頁滑動後不被吸附拉回', y2 >= y1 - 80, `${y1} → ${y2}`);
 }
 await shot('04-pretest');
-// 接續測試：重新載入 → 應出現提示 → 接續後回到前測
+// 接續＋已送出免重做測試（2026-10-22）：
+// 先注入「三份前測都已送出」的標記再重新載入。接續回前測頁後應該：
+//   三份都直接收合（iframe 高 460 = SUBMITTED_HEIGHT）、顯示「已提交 Submitted」、
+//   **不自動跳轉**（等超過 1600ms 自動跳轉時限後仍在前測頁）、
+//   頁尾出現 Next 鈕；按下 Next 才進入準備觀影。
+await ev(`(() => {
+  const p = JSON.parse(localStorage.getItem('fyp_participant'));
+  localStorage.setItem('fyp_submissions', JSON.stringify({ pid: p.id, forms: ['preTest1', 'preTest2', 'preTestErq'] }));
+  return true;
+})()`);
 await send('Page.reload', { ignoreCache: false });
 await waitFor('接續提示出現', `document.body.innerText.includes('接續上次進度')`, 15000);
 t = await bodyText() || '';
@@ -419,7 +428,19 @@ await shot('04b-resume-prompt');
 await clickByText('button', '接續上次進度');
 await waitFor('回到前測', `document.querySelectorAll('iframe').length >= 3`, 15000);
 check('接續後回到前測頁', (await ev(`document.querySelectorAll('iframe').length`)) >= 3);
-await escapeNext();
+// 等超過自動跳轉的 1600ms —— 恢復回來**不該**被跳走；也給 prefill／收合套用留時間
+await sleep(3500);
+const restoredHeights = await ev(`[...document.querySelectorAll('iframe')].map((f) => Math.round(f.getBoundingClientRect().height))`);
+check('恢復後三份表單都收合（高 460）',
+  Array.isArray(restoredHeights) && restoredHeights.length >= 3 && restoredHeights.slice(0, 3).every((h) => h === 460),
+  JSON.stringify(restoredHeights));
+t = await bodyText() || '';
+check('恢復後顯示「已提交 Submitted」×3', (t.match(/已提交 Submitted/g) || []).length >= 3, `count=${(t.match(/已提交 Submitted/g) || []).length}`);
+check('恢復後沒有被自動跳轉推走（仍在前測頁）', t.includes('生命意義感量表') && !t.includes('準備你的觀影'));
+const restoredNext = await ev(`[...document.querySelectorAll('button')].some((b) => (b.innerText || '').includes('下一頁') && b.offsetParent !== null)`);
+check('恢復後出現頁尾 Next 鈕', restoredNext === true);
+await shot('04c-pretest-restored');
+await clickByText('button', 'Next · 下一頁');
 await waitFor('進入準備觀影', `document.body.innerText.includes('Preparing Your Session') || document.body.innerText.includes('準備你的觀影')`, 8000);
 
 // STEP 5 — GroupGate

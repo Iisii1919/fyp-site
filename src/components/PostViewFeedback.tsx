@@ -1,9 +1,10 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParticipant } from '@/lib/participant';
 import { buildPrefill } from '@/lib/formPrefill';
+import { isSubmitted, markSubmitted } from '@/lib/submissions';
 import { useAutoAdvance } from '@/lib/useAutoAdvance';
 import GoogleFormEmbed from '@/components/GoogleFormEmbed';
 import { viewingFeedbackHeightForWidth } from '@/lib/formHeights';
@@ -24,10 +25,23 @@ export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) 
   const [src, setSrc] = useState<string | null>(null);
   // iframe 高度依容器寬度查表（高度表與量測說明在 src/lib/formHeights.ts）
   const [wrapRef, formHeight] = useFormHeight(viewingFeedbackHeightForWidth, viewingFeedbackHeightForWidth(768));
-  const handleSubmitted = useAutoAdvance(onComplete);
+  const triggerAdvance = useAutoAdvance(onComplete);
+
+  // 「上次已送出」的恢復狀態：返回／刷新回到這頁時直接顯示收合完成態＋Next 鈕，
+  // 不再要求重送（資料已在 Google），也不重複自動跳轉把按返回的人又往前推
+  // （標記的存取見 src/lib/submissions.ts）。
+  const [restoredDone, setRestoredDone] = useState(false);
+
+  // 只有「這次掛載真的送出」才寫標記＋自動跳轉。
+  const handleSubmitted = useCallback(() => {
+    if (participant) markSubmitted(participant.id, 'viewingFeedback');
+    triggerAdvance();
+  }, [participant, triggerAdvance]);
 
   useEffect(() => {
     if (!participant) return; // participant 就緒才產生 src（原因見下方渲染處註解）
+    // 「上次已送出」的恢復標記：participant 一到就查
+    setRestoredDone(isSubmitted(participant.id, 'viewingFeedback'));
     setSrc(buildPrefill(FORM_SRC, 'viewingFeedback', participant));
   }, [participant]);
 
@@ -62,6 +76,7 @@ export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) 
             height={formHeight}
             title="Viewing Feedback"
             onSubmitted={handleSubmitted}
+            startCollapsed={restoredDone}
           />
         ) : (
           // 佔位卡片：撐住表單高度，避免 participant 就緒的一瞬間版面跳動
@@ -74,11 +89,38 @@ export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) 
       </div>
 
       {/* 表單下方的小提示（不擋 StepFooter） */}
-      <p className="text-[#8a8a8a] text-xs mt-8 mb-24 text-center">
-        After submitting, you will automatically continue to the next step.
-        <br />
-        提交後會自動繼續下一步。
+      <p className={`text-[#8a8a8a] text-xs mt-8 text-center ${restoredDone ? '' : 'mb-24'}`}>
+        {restoredDone ? (
+          <>
+            You have already submitted this form — press “Next · 下一頁” to continue.
+            <br />
+            你已提交過這份問卷，按「下一頁」即可繼續。
+          </>
+        ) : (
+          <>
+            After submitting, you will automatically continue to the next step.
+            <br />
+            提交後會自動繼續下一步。
+          </>
+        )}
       </p>
+
+      {/* 已送過的人按返回／刷新回來：給一顆明確的「下一頁」，不用再送一次。
+          平時刻意沒有這顆按鈕（防止跳過問卷），只有恢復完成態才出現。 */}
+      {restoredDone && onComplete && (
+        <button
+          type="button"
+          onClick={onComplete}
+          className="mt-4 mb-24 inline-flex items-center gap-3 px-7 py-3 rounded-full border border-[rgba(198,168,248,0.45)] bg-[rgba(198,168,248,0.12)] text-[#d4bfff] hover:bg-[rgba(198,168,248,0.24)] hover:border-[rgba(198,168,248,0.8)] transition-colors"
+        >
+          <span className="text-sm md:text-base font-medium tracking-wide whitespace-nowrap">
+            Next · 下一頁
+          </span>
+          <svg className="w-5 h-5 md:w-6 md:h-6 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

@@ -14,6 +14,7 @@ import ThankYou from '@/components/ThankYou';
 import GroupGate from '@/components/GroupGate';
 import StepFooter from '@/components/StepFooter';
 import DevGroupSwitcher from '@/components/DevGroupSwitcher';
+import DevStepJumper from '@/components/DevStepJumper';
 import ResumePrompt from '@/components/ResumePrompt';
 import { ParticipantProvider, clearParticipant } from '@/lib/participant';
 import { readProgress, saveProgress } from '@/lib/progress';
@@ -67,6 +68,11 @@ export default function Home() {
   // 是否已經讀過儲存的進度。在讀完之前不能寫入，否則 mount 時的
   // saveProgress(0) 會把要接續的進度清掉。
   const [progressLoaded, setProgressLoaded] = useState(false);
+  // 影片步驟是否已看完四段。
+  // 🔴 放在 page 而不是 VideoViewer 內部：按「返回」回到影片頁時 VideoViewer 會重新掛載，
+  //    內部的 completedVideos 會歸零 → 前進鈕會消失，參與者就卡死了。
+  //    存在這裡（page 不重新掛載）才能做到「看完、返回、仍有下一頁」。
+  const [videosDone, setVideosDone] = useState(false);
 
   // ---- 瀏覽器返回鍵整合（2026-10-22）----
   // 背景：本站是單頁 wizard（URL 永遠是 /）。以往按「返回」會直接離開網站；
@@ -335,6 +341,8 @@ export default function Home() {
   }, []);
 
   const handleAllVideosComplete = useCallback(() => {
+    // 先記錄「已看完」再前進：這樣按返回回到影片頁時，前進鈕還在（見 videosDone 的註解）
+    setVideosDone(true);
     goNext();
   }, [goNext]);
 
@@ -342,6 +350,8 @@ export default function Home() {
     <ParticipantProvider>
       <main className="bg-[#3d3d3d] min-h-screen">
         <DevGroupSwitcher />
+        {/* 開發用跳頁（僅 localhost 顯示）—— 測單一頁面時不必先填完前測 */}
+        <DevStepJumper step={step} labels={STEP_LABELS} onJump={setStep} />
 
         {resumeAt !== null && (
           <ResumePrompt
@@ -403,8 +413,21 @@ export default function Home() {
               progress={videoProgress}
               onAllComplete={handleAllVideosComplete}
             />
-            {/* 影片頁看完所有片段會自動跳，但萬一有片段載不出來就卡住 → 保留 chevron 當備援 */}
-            <StepFooter onNext={goNext} canNext />
+            {/* 🔴 沒看完四段就不給前進（2026-10-30 使用者要求）。
+                以前 chevron 一律顯示 → 參與者可以不看影片直接跳過，
+                結果收到「沒看過介入、卻填完問卷」的資料。
+                看完會自動跳到回饋頁；按返回回到這頁時 videosDone 仍是 true，
+                所以 chevron 還在（不會卡死）。
+                ⚠️ 真的載不出來的影片，播放器錯誤卡片上有「仍然繼續」可以逐段跳過，
+                   不會把參與者困在這裡。 */}
+            {videosDone ? (
+              <StepFooter onNext={goNext} canNext />
+            ) : (
+              <div className="absolute bottom-8 left-0 right-0 z-40 text-center px-6 pointer-events-none">
+                <p className="text-[#b9b9b9] text-xs">看完四段影片後即可繼續</p>
+                <p className="text-[#9a9a9a] text-xs mt-1">Watch all four clips to continue</p>
+              </div>
+            )}
           </section>
         )}
 

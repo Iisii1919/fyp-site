@@ -11,7 +11,7 @@ import { viewingFeedbackHeightForWidth } from '@/lib/formHeights';
 import { useFormHeight } from '@/lib/useFormHeight';
 import { H1_PAGE, H2_PAGE } from '@/lib/headingSizes';
 // 劇情回顧用的影片清單 —— 與影片頁共用同一份（見 src/lib/clips.ts 檔頭）。
-import { sadnessClips, neutralClips } from '@/lib/clips';
+import { sadnessClips, neutralClips, recapImage } from '@/lib/clips';
 
 interface PostViewFeedbackProps {
   /** 送出後自動前往下一步（這一頁只有這份問卷）。 */
@@ -125,8 +125,23 @@ export default function PostViewFeedback({ onComplete }: PostViewFeedbackProps) 
           {showRecap && (
             <ul className="mt-3 space-y-3">
               {recapClips.map((c) => (
-                <li key={c.id} className="glass-card px-5 py-4">
-                  <p className="font-serif text-[#EAECEF] text-sm font-semibold leading-snug">
+                <li key={c.id} className="glass-card px-4 py-4">
+                  {/* 劇照：滿版放在文字上方（2026-10-30 使用者要求「圖片太小、放大放到文字上面」）。
+                      ⚠️ 用原生 <img> 而非 next/image —— 這些是 public/ 下的靜態小圖
+                      （每張 35–90 KB），不需要影像最佳化管線。
+                      ⚠️ 刻意**不固定長寬比、不用 object-cover**：研究者提供的截圖
+                      比例本來就不同（1.72–2.48），硬裁成 16:9 會切掉左右各約 1/4 的畫面。
+                      記憶輔助靠的是「看得到整個場景」，寧可卡片高度不齊也不要裁掉內容。 */}
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={recapImage(c)}
+                    alt=""
+                    loading="lazy"
+                    decoding="async"
+                    className="block w-full rounded-lg"
+                    style={{ background: 'rgba(255,255,255,0.06)' }}
+                  />
+                  <p className="font-serif text-[#EAECEF] text-sm font-semibold leading-snug mt-3">
                     {c.id}. {c.title} <span className="text-[#C6A8F8]">{c.titleZh}</span>
                   </p>
                   {/* 英文在上、中文在下（全站雙語慣例） */}

@@ -12,6 +12,16 @@ interface VideoViewerProps {
   progress: number;
   onAllComplete?: () => void;
   group?: Group;
+  /**
+   * 這一批影片是否**已經看完過**（由 page 的 `videosDone` 傳進來）。
+   *
+   * 🔴 為什麼需要：按「返回」回到影片頁時，這個元件會重新掛載、內部
+   *    `completedVideos` 歸零 → 底部進度面板會顯示 0/4，但前進鈕已經出現，
+   *    兩者互相矛盾（參與者會以為自己要重看）。
+   *    傳 true 進來就讓面板一開始就是 4/4。
+   * ⚠️ 兩組的 clip id 都是 1–4，所以用 id 標記不會有組別錯配的問題。
+   */
+  initiallyCompleted?: boolean;
 }
 
 // ⚠️ 影片清單（sadnessClips / neutralClips）與 Clip 型別已移到 src/lib/clips.ts，
@@ -968,8 +978,13 @@ function TransitionPage({ nextClip, nextIndex }: { nextClip: Clip; nextIndex: nu
   );
 }
 
-export default function VideoViewer({ onProgress, progress, onAllComplete, group }: VideoViewerProps) {
-  const [completedVideos, setCompletedVideos] = useState<number[]>([]);
+export default function VideoViewer({
+  onProgress,
+  progress,
+  onAllComplete,
+  group,
+  initiallyCompleted,
+}: VideoViewerProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const participant = useParticipant();
 
@@ -977,6 +992,13 @@ export default function VideoViewer({ onProgress, progress, onAllComplete, group
   // 優先使用 props 傳入的 group，否則從 ParticipantContext 讀取既有分配。
   const resolvedGroup = group ?? participant?.group ?? 'sadness';
   const clips = resolvedGroup === 'neutral' ? neutralClips : sadnessClips;
+
+  // ⚠️ 必須放在 `clips` 之後：initializer 要用 clips 的 id。
+  //    `initiallyCompleted` 為 true（從回饋頁按返回）時一開始就標記全部看完，
+  //    底部的進度面板才不會顯示 0/4 而跟前進鈕矛盾。
+  const [completedVideos, setCompletedVideos] = useState<number[]>(
+    () => (initiallyCompleted ? clips.map((c) => c.id) : [])
+  );
 
   // 進度更新和全部完成的回調必須放在 effect 裡，
   // 不能寫在 setState updater 內（React 18 會在渲染期間呼叫 updater，
@@ -987,12 +1009,17 @@ export default function VideoViewer({ onProgress, progress, onAllComplete, group
     );
   }, []);
 
+  // 「已經看完過」的情況（從回饋頁按返回）不要再次觸發 onAllComplete，
+  // 否則會立刻又被跳回下一步 → 參與者永遠回不到影片頁。
+  const announcedRef = useRef(!!initiallyCompleted);
+
   useEffect(() => {
     onProgress((completedVideos.length / clips.length) * 100);
-    if (completedVideos.length === clips.length && onAllComplete) {
+    if (completedVideos.length === clips.length && onAllComplete && !announcedRef.current) {
+      announcedRef.current = true;
       onAllComplete();
     }
-  }, [completedVideos, onProgress, onAllComplete]);
+  }, [completedVideos, onProgress, onAllComplete, clips.length]);
 
   const allCompleted = completedVideos.length === clips.length;
 
@@ -1093,19 +1120,74 @@ export default function VideoViewer({ onProgress, progress, onAllComplete, group
         </div>
       )}
 
-      {/* 視頻與問卷之間的大間隔（吸附點） */}
-      <div className="h-[75vh] w-full flex items-center justify-center relative overflow-hidden scroll-snap-start">
-        <div className="ambient-glow" style={{ width: '400px', height: '400px', background: 'radial-gradient(circle, rgba(198,168,248,0.06) 0%, transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%, -50%)' }} />
-        <div className="text-center relative z-10">
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
-            className="mb-4"
-          >
-            <svg className="w-8 h-8 text-[#9a9a9a] mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 14l-7 7m0 0l-7-7m7 7V3" /></svg>
-          </motion.div>
-          <p className="text-[#8a8a8a] text-xs tracking-[0.3em] uppercase">Questionnaire Ahead</p>
-          <p className="text-[#7a7a7a] text-[10px] mt-1 tracking-wider">問卷就在前方</p>
+      {/* 影片進度面板。
+          🔴 2026-10-31 使用者要求：**刪掉原本的「Questionnaire Ahead / 問卷就在前方」
+             間隔畫面**，並在影片下面加上像問卷進度那樣的面板。
+          目的：參與者捲到底時能看到「還差哪幾段沒看」，而不是只有一句「問卷就在前方」。
+          ⚠️ 不要再把「問卷就在前方」加回來。 */}
+      <div className="w-full flex justify-center px-4 pt-12 pb-20">
+        <div className="w-full max-w-2xl rounded-2xl border border-[rgba(198,168,248,0.28)] bg-[rgba(255,255,255,0.04)] px-5 py-5">
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <p className="text-[#C6A8F8] text-sm font-medium leading-snug">
+                Video progress {completedVideos.length} / {clips.length}
+              </p>
+              <p className="text-[#C6A8F8] text-sm leading-snug">
+                影片進度 {completedVideos.length} / {clips.length}
+              </p>
+            </div>
+            {/* 每段一個小指示條，填滿 = 已看完 */}
+            <div className="flex gap-1.5 pt-2" aria-hidden>
+              {clips.map((c) => (
+                <span
+                  key={c.id}
+                  className="block w-5 h-1.5 rounded-full transition-colors"
+                  style={{ background: completedVideos.includes(c.id) ? '#C6A8F8' : 'rgba(255,255,255,0.18)' }}
+                />
+              ))}
+            </div>
+          </div>
+
+          <ul className="mt-4 space-y-3">
+            {clips.map((c) => {
+              const done = completedVideos.includes(c.id);
+              return (
+                <li key={c.id} className="flex items-start gap-3">
+                  <span
+                    className="mt-0.5 shrink-0 w-5 h-5 rounded-full border flex items-center justify-center text-[10px] leading-none"
+                    style={{
+                      borderColor: done ? 'rgba(198,168,248,0.7)' : 'rgba(255,255,255,0.22)',
+                      color: done ? '#C6A8F8' : '#9a9a9a',
+                    }}
+                    aria-hidden
+                  >
+                    {c.id}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-[#EAECEF] text-sm leading-snug">{c.title}</p>
+                    <p className="text-[#c4c4c4] text-xs leading-snug">{c.titleZh}</p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <p className="text-xs leading-snug" style={{ color: done ? '#C6A8F8' : '#8a8a8a' }}>
+                      {done ? 'Watched' : 'Not watched'}
+                    </p>
+                    <p className="text-xs leading-snug" style={{ color: done ? '#C6A8F8' : '#8a8a8a' }}>
+                      {done ? '已觀看' : '未觀看'}
+                    </p>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+
+          <div className="mt-4 pt-4 border-t border-[rgba(255,255,255,0.09)]">
+            <p className="text-[#EAECEF] text-sm leading-snug">
+              {allCompleted ? 'All four clips watched. You can continue.' : 'Watch all four clips to continue.'}
+            </p>
+            <p className="text-[#c4c4c4] text-sm leading-snug mt-1">
+              {allCompleted ? '四段影片都已看完，可以繼續下一步。' : '請看完全部 4 段影片才會繼續下一步。'}
+            </p>
+          </div>
         </div>
       </div>
     </div>

@@ -19,6 +19,7 @@ import ResumePrompt from '@/components/ResumePrompt';
 import { ParticipantProvider, clearParticipant } from '@/lib/participant';
 import { readProgress, saveProgress } from '@/lib/progress';
 import { useResearcherEscape } from '@/lib/useResearcherEscape';
+import { useAutoAdvance } from '@/lib/useAutoAdvance';
 
 // 步驟重編：原 10 步 → 11 步（2026-10-13 在最前面插入招募資格篩選）
 //  0 Hero
@@ -91,6 +92,10 @@ export default function Home() {
   const stepRef = useRef(0);
 
   const goNext = useCallback(() => setStep((s) => Math.min(s + 1, TOTAL_STEPS - 1)), []);
+
+  // 影片看完後沿用前後測問卷的自動跳轉節奏：先停留 1.6 秒，讓參與者看到
+  // 「四段都看完了」的完成狀態，再前往觀影回饋。立刻跳走會讓人以為網站自己跳頁。
+  const triggerVideoAdvance = useAutoAdvance(goNext);
 
   // 研究員專用逃生鍵（Shift + Alt + N）：所有自動跳轉都失效時，當場把場次救回來。
   // 詳見 src/lib/useResearcherEscape.ts 的說明 —— 刻意不給參與者任何提示。
@@ -341,10 +346,11 @@ export default function Home() {
   }, []);
 
   const handleAllVideosComplete = useCallback(() => {
-    // 先記錄「已看完」再前進：這樣按返回回到影片頁時，前進鈕還在（見 videosDone 的註解）
+    // 先記錄「已看完」：進度面板與前進鈕會立刻變成完成狀態，
+    // 但頁面停留 1.6 秒才跳轉（跟前後測問卷送出後的節奏一致）。
     setVideosDone(true);
-    goNext();
-  }, [goNext]);
+    triggerVideoAdvance();
+  }, [triggerVideoAdvance]);
 
   return (
     <ParticipantProvider>
@@ -412,6 +418,7 @@ export default function Home() {
               onProgress={handleVideoProgress}
               progress={videoProgress}
               onAllComplete={handleAllVideosComplete}
+              initiallyCompleted={videosDone}
             />
             {/* 🔴 沒看完四段就不給前進（2026-10-30 使用者要求）。
                 以前 chevron 一律顯示 → 參與者可以不看影片直接跳過，
@@ -419,15 +426,10 @@ export default function Home() {
                 看完會自動跳到回饋頁；按返回回到這頁時 videosDone 仍是 true，
                 所以 chevron 還在（不會卡死）。
                 ⚠️ 真的載不出來的影片，播放器錯誤卡片上有「仍然繼續」可以逐段跳過，
-                   不會把參與者困在這裡。 */}
-            {videosDone ? (
-              <StepFooter onNext={goNext} canNext />
-            ) : (
-              <div className="absolute bottom-8 left-0 right-0 z-40 text-center px-6 pointer-events-none">
-                <p className="text-[#b9b9b9] text-xs">看完四段影片後即可繼續</p>
-                <p className="text-[#9a9a9a] text-xs mt-1">Watch all four clips to continue</p>
-              </div>
-            )}
+                   不會把參與者困在這裡。
+                ⚠️ 未看完時的提示文字已移到 VideoViewer 底部的進度面板
+                   （2026-10-31 使用者要求），這裡不再重複顯示。 */}
+            {videosDone && <StepFooter onNext={goNext} canNext />}
           </section>
         )}
 

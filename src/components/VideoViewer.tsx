@@ -24,6 +24,12 @@ const VIDEO_BASE = (process.env.NEXT_PUBLIC_VIDEO_BASE_URL || '').replace(/\/$/,
 function videoUrl(file: string): string {
   return VIDEO_BASE ? `${VIDEO_BASE}/${file}` : `/videos/${file}`;
 }
+// 本地副本（放在 public/videos/，由 Netlify 直接提供）。
+// 用途：R2 失敗時自動退回本地 —— r2.dev 官方明文「rate-limited、僅供開發」，
+// 多人同時開很容易被限流；本地副本沒有這個問題，代價只是佔用 repo 空間。
+function localVideoUrl(file: string): string {
+  return `/videos/${file}`;
+}
 
 function formatTime(seconds: number): string {
   if (!isFinite(seconds) || seconds < 0) return '0:00';
@@ -109,6 +115,13 @@ function VideoPlayer({  clip,
   // 沒有這個指示，參與者會以為「按了沒反應」而重複點擊 —— 那正是
   // AbortError 的觸發情境，也是使用者回報「一開始播放不了」的真正體感。
   const [isBuffering, setIsBuffering] = useState(false);
+  // 載入失敗：來源請求失敗（網路斷、r2.dev 限流、檔案 404、格式不支援）時，
+  // <video> 會停在 readyState 0，畫面就是**一片純黑**。
+  // 沒有這個狀態，參與者只看到黑屏、不知道發生什麼事，然後按「下一頁」
+  // 跳過整個介入 —— 資料會變成「沒看影片但填了問卷」（2026-10-30 參與者回報）。
+  const [loadFailed, setLoadFailed] = useState(false);
+  // 是否已退回本地副本（public/videos/）。只在主來源（R2）失敗時翻一次。
+  const [useLocalSrc, setUseLocalSrc] = useState(false);
   const [showControls, setShowControls] = useState(true);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -327,12 +340,20 @@ function VideoPlayer({  clip,
     }
   }, []);
 
+  // 重新載入影片：clear 錯誤狀態後叫 <video> 重新發請求。
+  // 用 load() 而不是改 src —— 改 src 會在聯合 session history 多生一筆，
+  // 參與者按「返回」會回到沒有 prefill 的網址（見 PreTest1.tsx 的同類註解）。
+  const retryLoad = useCallback(() => {
+    setLoadFailed(false);
+    setIsBuffering(true);
+    videoRef.current?.load();
+  }, []);
+
   const handleVolumeChange = useCallback(() => {
     if (videoRef.current) {
       setVolume(videoRef.current.volume);
       setIsMuted(videoRef.current.muted);
-    }
-  }, []);
+    }  }, []);
 
   const toggleMute = useCallback(() => {
     if (!videoRef.current) return;
@@ -645,11 +666,18 @@ function VideoPlayer({  clip,
       // 理由見 handlePlayerPointerDown 的說明。
       onPointerDown={handlePlayerPointerDown}
     >
-      <div className="relative w-full">
+      {/* 🔴 loadFailed 時要給容器足夠高度：影片沒有 metadata 就沒有固有尺寸，
+          Chrome 會用預設 300×150，播放器只剩約 150px 高 → 錯誤卡片被裁掉，
+          按鈕落在 overflow-hidden 之外（實測 elementFromPoint 打不到）。
+          minHeight 260 是量出來的：錯誤卡片約 218px，加上內距才不會被切。 */}
+      <div
+        className="relative w-full"
+        style={loadFailed ? { aspectRatio: '16 / 9', minHeight: 260 } : undefined}
+      >
         <video
           ref={videoRef}
           className="w-full h-auto block"
-          src={videoUrl(clip.src) || undefined}
+          src={(useLocalSrc ? localVideoUrl(clip.src) : videoUrl(clip.src)) || undefined}
           onEnded={handleEnded}
           onPlay={() => setIsPlaying(true)}
           onPause={() => { setIsPlaying(false); setIsBuffering(false); }}
@@ -660,6 +688,18 @@ function VideoPlayer({  clip,
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
           onVolumeChange={handleVolumeChange}
+          // 成功解出第一格畫面 → 清掉錯誤狀態（重試成功後覆蓋層要消失）
+          onLoadedData={() => setLoadFailed(false)}
+          // 來源失敗 → 先試本地副本（R2 被限流／連不上時最常見），本地也不行才顯示錯誤。
+          // 只翻一次，避免無限重試。
+          onError={() => {
+            setIsBuffering(false);
+            if (!useLocalSrc && VIDEO_BASE) {
+              setUseLocalSrc(true);
+            } else {
+              setLoadFailed(true);
+            }
+          }}
           playsInline
           preload="metadata"
         />
@@ -683,6 +723,51 @@ function VideoPlayer({  clip,
               aria-hidden
             />
             <span className="text-[#EAECEF] text-xs">載入中… Loading</span>
+          </div>
+        </div>
+      )}
+
+      {/* 載入失敗：以前這裡什麼都沒有 —— 來源連不上就是一片純黑，
+          參與者不知道發生什麼事，只會按「下一頁」跳過影片。
+          現在明確說明是「載入失敗」而不是「網站壞了」，並給一個重試鍵。
+          ⚠️ 這一層必須 pointer-events-auto（緩衝層是 none），否則按不到重試。
+          🔴 內容必須**矮於播放器**：播放器是 overflow-hidden，手機上只有約 200px 高，
+             卡片一高就把重試鈕裁掉 → elementFromPoint 打不到、按鈕等於不存在
+             （2026-10-30 實測：初版 4 行大字＋32px 圖示 = 卡片約 220px，被裁）。
+             所以字級壓到 11–13px、去掉圖示、間距收緊。 */}
+      {loadFailed && (
+        <div
+          className="absolute inset-0 z-40 flex items-center justify-center overflow-y-auto p-2"
+          style={{ background: 'rgba(0,0,0,0.86)' }}
+        >
+          <div
+            className="flex w-full max-w-[280px] flex-col items-center gap-1.5 rounded-xl px-4 py-3 text-center"
+            style={{ background: 'rgba(40,40,40,0.92)', border: '1px solid rgba(198,168,248,0.35)' }}
+            role="alert"
+          >
+            <p className="text-[#EAECEF] text-[13px] font-medium leading-tight">影片載入失敗</p>
+            <p className="text-[#EAECEF] text-[12px] leading-tight">The video failed to load</p>
+            <p className="text-[#c9c9c9] text-[11px] leading-snug">請確認網路連線後重試</p>
+            <p className="text-[#c9c9c9] text-[11px] leading-snug">Please check your connection and retry</p>
+            {/* 兩個動作放同一行，省高度（卡片一高就會被播放器的 overflow-hidden 裁掉） */}
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-2">
+              <button
+                onClick={retryLoad}
+                className="px-4 py-1.5 rounded-full text-[12px] font-medium transition-transform hover:scale-105"
+                style={{ background: 'linear-gradient(135deg,#C6A8F8,#9b7fd4)', color: '#1a1a1a' }}
+              >
+                重試 Retry
+              </button>
+              {/* 逃生門：R2 與本地副本都失敗時，至少讓參與者能完成研究，
+                  而不是卡在這一頁直接關掉（那樣是整份資料都丟了）。
+                  ⚠️ 只有真的載入失敗才會出現，正常情況看不到。 */}
+              <button
+                onClick={() => { setLoadFailed(false); onComplete(clip.id); }}
+                className="px-3 py-1.5 rounded-full text-[11px] text-[#c9c9c9] border border-[rgba(255,255,255,0.22)] hover:text-[#EAECEF] hover:border-[rgba(255,255,255,0.4)] transition-colors"
+              >
+                仍然繼續 Continue
+              </button>
+            </div>
           </div>
         </div>
       )}
